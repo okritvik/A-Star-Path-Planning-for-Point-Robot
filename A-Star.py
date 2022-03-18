@@ -108,6 +108,9 @@ def draw_obstacles(canvas):
                 canvas[j][i] = [255,0,0]
     return canvas
 
+#Change the data structure to add total cost and cost to goal.
+#Generate action Sets as given in PPT
+
 def astar(initial_state,final_state,canvas):
     """
     @brief: This function implements the A* algorithm to find the path between given
