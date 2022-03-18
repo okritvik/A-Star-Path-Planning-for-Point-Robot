@@ -24,7 +24,11 @@ def take_inputs(canvas):
     """
     initial_state = []
     final_state = []
-    angle = 0
+    initial_angle = 0
+    final_angle = 0
+    clearance = 0
+    robot_radius = 0
+    step_size = 0
     while True:
         while True:
             state = input("Enter the X Coordinate of Start Node: ")
@@ -72,12 +76,33 @@ def take_inputs(canvas):
         else:
             break
     while True:
-        angle = input("Enter the Initial Head Angle (0 to 360 degrees): ")
-        if(int(angle)<0 or int(angle)>359):
+        initial_angle = input("Enter the Initial Head Angle (0 to 360 degrees (multiple of 30 degrees)): ")
+        if(int(initial_angle)<0 or int(initial_angle)>359):
             print("Enter Valid Headway Angle")
         else:
+            initial_state.append(initial_angle)
             break
-    return initial_state,final_state,angle
+    while True:
+        final_angle = input("Enter the Initial Head Angle (0 to 360 degrees (multiple of 30 degrees)): ")
+        if(int(final_angle)<0 or int(final_angle)>359):
+            print("Enter Valid Headway Angle")
+        else:
+            final_state.append(final_angle)
+            break
+    while True:
+        clearance = input("Enter the clearance ")
+        if(int(clearance)<0):
+            print("Enter Valid Clearance")
+        else:
+            break
+    while True:
+        robot_radius = input("Enter the robot radius ")
+        if(int(robot_radius)<0):
+            print("Enter Valid robot_radius")
+        else:
+            final_state.append(final_angle)
+            break
+    return initial_state,final_state
 
 def draw_obstacles(canvas):
     """
@@ -95,7 +120,7 @@ def draw_obstacles(canvas):
     # print(shape)
     for i in range(width):
         for j in range(height):
-            if(i-5<=0) or (i-395>=0) or (j-5 <=0) or (j-245>=0):
+            if(i-5<=0) or (i-395>=0) or (j-5<=0) or (j-245>=0):
                 canvas[j][i] = [255,0,0]
 
             if ((i-300)**2+(j-65)**2-(45**2))<=0:
@@ -110,6 +135,109 @@ def draw_obstacles(canvas):
 
 #Change the data structure to add total cost and cost to goal.
 #Generate action Sets as given in PPT
+def action_zero(node,canvas,visited,step): # Local angles
+    next_node = node.copy()
+    
+    next_angle = next_node[2] + 0
+    if next_angle < 0:
+        next_angle += 360 
+    next_angle %= 360
+    next_height = round(next_node[0] + step*np.sin(np.deg2rad(next_angle)))
+    next_width = round(next_node[1] + step*np.cos(np.deg2rad(next_angle)))
+    
+
+    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[next_height][next_angle][0]<255) :
+        next_node[0] = next_height
+        next_node[1] = next_width
+        next_node[2] = next_angle
+        visited[next_height*2][next_width*2][int(next_angle/30)] = 1
+        return True, next_node
+    else:
+        return False, next_node
+    
+
+def action_minus_thirty(node,canvas,visited,step): # Local angles
+    next_node = node.copy()
+    
+    next_angle = next_node[2] + 30
+    if next_angle < 0:
+        next_angle += 360 
+    next_angle %= 360
+    next_height = round(next_node[0] + step*np.sin(np.deg2rad(next_angle)))
+    next_width = round(next_node[1] + step*np.cos(np.deg2rad(next_angle)))
+    
+
+    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[next_height][next_angle]<255) and (visited[next_height*2][next_width*2][int(next_angle/30)] == 0) :
+        next_node[0] = next_height
+        next_node[1] = next_width
+        next_node[2] = next_angle
+        visited[next_height*2][next_width*2][int(next_angle/30)] = 1
+        return True, next_node
+    else:
+        return False, next_node
+
+
+def action_minus_sixty(node,canvas,visited,step): # Local angles
+    next_node = node.copy()
+    
+    next_angle = next_node[2] + 60
+    if next_angle < 0:
+        next_angle += 360
+    
+    next_angle %= 360 
+    next_height = round(next_node[0] + step*np.sin(np.deg2rad(next_angle)))
+    next_width = round(next_node[1] + step*np.cos(np.deg2rad(next_angle)))
+    
+
+    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[next_height][next_angle]<255) :
+        next_node[0] = next_height
+        next_node[1] = next_width
+        next_node[2] = next_angle
+        visited[next_height*2][next_width*2][int(next_angle/30)] = 1
+        return True, next_node
+    else:
+        return False, next_node
+
+def action_plus_thirty(node,canvas,visited,step): # Local angles
+    next_node = node.copy()
+    
+    next_angle = next_node[2] - 30
+    if next_angle < 0:
+        next_angle += 360 
+    next_angle %= 360
+    next_height = round(next_node[0] + step*np.sin(np.deg2rad(next_angle)))
+    next_width = round(next_node[1] + step*np.cos(np.deg2rad(next_angle)))
+    
+
+    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[next_height][next_angle]<255) :
+        next_node[0] = next_height
+        next_node[1] = next_width
+        next_node[2] = next_angle
+        visited[next_height*2][next_width*2][int(next_angle/30)] = 1
+        return True, next_node
+    else:
+        return False, next_node
+
+def action_plus_sixty(node,canvas,visited,step): # Local angles
+    next_node = node.copy()
+    
+    next_angle = next_node[2] - 60
+    if next_angle < 0:
+        next_angle += 360
+    next_angle %= 360 
+    next_height = round(next_node[0] + step*np.sin(np.deg2rad(next_angle)))
+    next_width = round(next_node[1] + step*np.cos(np.deg2rad(next_angle)))
+    
+
+    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[next_height][next_angle]<255) :
+        next_node[0] = next_height
+        next_node[1] = next_width
+        next_node[2] = next_angle
+        visited[next_height*2][next_width*2][int(next_angle/30)] = 1
+        return True, next_node
+    else:
+        return False, next_node
+
 
 def astar(initial_state,final_state,canvas):
     """
@@ -125,182 +253,29 @@ def astar(initial_state,final_state,canvas):
     open_list = []
     closed_list = {}
     back_track_flag = False
+    visited_nodes =np.zeros((500,800,12))
     hq.heapify(open_list)
     hq.heappush(open_list,[0,initial_state,initial_state])
-    while(len(open_list)>0):
-        # 0: cost, 1: parent node, 2: present node
-        node = hq.heappop(open_list)
-        # print(node)
-        closed_list[(node[2][0],node[2][1])] = node[1] #Converted to tuple because the key for dictionary should be immutable
-        present_cost = node[0] #Present node cost to come
-        if list(node[2]) == final_state: #Checks if the popped node is goal node
-            back_track_flag = True
-            print("Back Track") #Back tracking starts
-            break #come out of the while loop
 
-        flag,next_node = action_move_up(node[2],canvas)
-        if(flag):
-            # print("Move up")
-            if next_node not in closed_list:
-                temp = False
-                for i in range(len(open_list)):
-                    if(open_list[i][2] == list(next_node)):
-                        # print("Found in Open list: ", open_list[i][2],next_node)
-                        temp = True
-                        if((present_cost+1)<open_list[i][0]): # Updating the cost and parent node
-                            open_list[i][0] = present_cost+1
-                            open_list[i][1] = node[2]
-                            hq.heapify(open_list)
-                        break
-                if(not temp): #Pushing the node if it is not present in both closed and open lists
-                    hq.heappush(open_list,[present_cost+1, node[2], list(next_node)])
-                    hq.heapify(open_list)
-                    # print("Pushed",temp)
-        
-        flag,next_node = action_move_top_right(node[2],canvas)
-        if(flag):
-            # print("Move top right")
-            if next_node not in closed_list:
-                temp = False
-                for i in range(len(open_list)):
-                    if(open_list[i][2] == list(next_node)):
-                        # print("Found in Open list: ", open_list[i][2],next_node)
-                        temp = True
-                        if((present_cost+1.4)<open_list[i][0]):# Updating the cost and parent node
-                            open_list[i][0] = present_cost+1.4
-                            open_list[i][1] = node[2]
-                            hq.heapify(open_list)
-                        break
-                if(not temp):#Pushing the node if it is not present in both closed and open lists
-                    hq.heappush(open_list,[present_cost+1.4, node[2], list(next_node)])
-                    hq.heapify(open_list)
-                    # print("Pushed",temp)
-                
-        flag,next_node = action_move_right(node[2],canvas)
-        if(flag):
-            # print("Move right")
-            if next_node not in closed_list:
-                temp = False
-                for i in range(len(open_list)):
-                    if(open_list[i][2] == list(next_node)):
-                        # print("Found in Open list: ", open_list[i][2],next_node)
-                        temp = True
-                        if((present_cost+1)<open_list[i][0]):# Updating the cost and parent node
-                            open_list[i][0] = present_cost+1
-                            open_list[i][1] = node[2]
-                            hq.heapify(open_list)
-                        break
-                if(not temp):#Pushing the node if it is not present in both closed and open lists
-                    hq.heappush(open_list,[present_cost+1, node[2], list(next_node)])
-                    hq.heapify(open_list)
-                    # print("Pushed",temp)
-    
-        flag,next_node = action_move_bottom_right(node[2],canvas)
-        if(flag):
-            # print("Move bottom right")
-            if next_node not in closed_list:
-                temp = False
-                for i in range(len(open_list)):
-                    if(open_list[i][2] == list(next_node)):
-                        # print("Found in Open list: ", open_list[i][2],next_node)
-                        temp = True
-                        if((present_cost+1.4)<open_list[i][0]):# Updating the cost and parent node
-                            open_list[i][0] = present_cost+1.4
-                            open_list[i][1] = node[2]
-                            hq.heapify(open_list)
-                        break
-                if(not temp):#Pushing the node if it is not present in both closed and open lists
-                    hq.heappush(open_list,[present_cost+1.4, node[2], list(next_node)])
-                    hq.heapify(open_list)
-                    # print("Pushed",temp)
-        
-        flag,next_node = action_move_down(node[2],canvas)
-        if(flag):
-            # print("Move down")
-            if next_node not in closed_list:
-                temp = False
-                for i in range(len(open_list)):
-                    if(open_list[i][2] == list(next_node)):
-                        # print("Found in Open list: ", open_list[i][2],next_node)
-                        temp = True
-                        if((present_cost+1)<open_list[i][0]):# Updating the cost and parent node
-                            open_list[i][0] = present_cost+1
-                            open_list[i][1] = node[2]
-                            hq.heapify(open_list)
-                        break
-                if(not temp):#Pushing the node if it is not present in both closed and open lists
-                    hq.heappush(open_list,[present_cost+1, node[2], list(next_node)])
-                    hq.heapify(open_list)
-                    # print("Pushed",temp)
-        
-        flag,next_node = action_move_bottom_left(node[2],canvas)
-        if(flag):
-            # print("Move bottom left")
-            if next_node not in closed_list:
-                temp = False
-                for i in range(len(open_list)):
-                    if(open_list[i][2] == list(next_node)):
-                        # print("Found in Open list: ", open_list[i][2],next_node)
-                        temp = True
-                        if((present_cost+1.4)<open_list[i][0]):# Updating the cost and parent node
-                            open_list[i][0] = present_cost+1.4
-                            open_list[i][1] = node[2]
-                            hq.heapify(open_list)
-                        break
-                if(not temp):#Pushing the node if it is not present in both closed and open lists
-                    hq.heappush(open_list,[present_cost+1.4, node[2], list(next_node)])
-                    hq.heapify(open_list)
-                    # print("Pushed",temp)
-        
-        flag,next_node = action_move_left(node[2],canvas)
-        if(flag):
-            # print("Move left")
-            if next_node not in closed_list:
-                temp = False
-                for i in range(len(open_list)):
-                    if(open_list[i][2] == list(next_node)):
-                        # print("Found in Open list: ", open_list[i][2],next_node)
-                        temp = True
-                        if((present_cost+1)<open_list[i][0]):# Updating the cost and parent node
-                            open_list[i][0] = present_cost+1
-                            open_list[i][1] = node[2]
-                            hq.heapify(open_list)
-                        break
-                if(not temp):#Pushing the node if it is not present in both closed and open lists
-                    hq.heappush(open_list,[present_cost+1, node[2], list(next_node)])
-                    hq.heapify(open_list)
-                    # print("Pushed",temp)
-        
-        flag,next_node = action_move_top_left(node[2],canvas)
-        if(flag):
-            # print("Move top left")
-            if next_node not in closed_list:
-                temp = False
-                for i in range(len(open_list)):
-                    if(open_list[i][2] == list(next_node)):
-                        # print("Found in Open list: ", open_list[i][2],next_node)
-                        temp = True
-                        if((present_cost+1.4)<open_list[i][0]):# Updating the cost and parent node
-                            open_list[i][0] = present_cost+1.4
-                            open_list[i][1] = node[2]
-                            hq.heapify(open_list)
-                        break
-                if(not temp):#Pushing the node if it is not present in both closed and open lists
-                    hq.heappush(open_list,[present_cost+1.4, node[2], list(next_node)])
-                    hq.heapify(open_list)
-                    # print("Pushed",temp)
-        
-        hq.heapify(open_list)
-        # print("Open List length",len(open_list))
-        # print("Closed List Length", len(closed_list))
-        # print("Closed List: ",closed_list)
-    
-    if(back_track_flag):
-        #Call the backtrack function
-        back_track(initial_state,final_state,closed_list,canvas)
+    flag,n_state
 
-    else:
-        print("Solution Cannot Be Found")
+    # while(len(open_list)>0):
+    #     # 0: cost, 1: parent node, 2: present node
+    #     node = hq.heappop(open_list)
+    #     # print(node)
+    #     closed_list[(node[2][0],node[2][1])] = node[1] #Converted to tuple because the key for dictionary should be immutable
+    #     present_cost = node[0] #Present node cost to come
+    #     if list(node[2]) == final_state: #Checks if the popped node is goal node
+    #         back_track_flag = True
+    #         print("Back Track") #Back tracking starts
+    #         break #come out of the while loop
+
+    # if(back_track_flag):
+    #     #Call the backtrack function
+    #     back_track(initial_state,final_state,closed_list,canvas)
+
+    # else:
+    #     print("Solution Cannot Be Found")
 
 
 def back_track(initial_state,final_state,closed_list,canvas):
@@ -353,12 +328,14 @@ if __name__ == '__main__':
     # cv2.imshow("Canvas",canvas)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
-    initial_state,final_state,head_angle = take_inputs(canvas) #Take the start and goal node from the user
+    initial_state,final_state = take_inputs(canvas) #Take the start and goal node from the user
     #Changing the cartesian coordinates to image coordinates:
     initial_state[1] = canvas.shape[0]-1 - initial_state[1]
     final_state[1] = canvas.shape[0]-1 - final_state[1]
-    
+    # print(initial_state,final_state,start_angle,goal_angle)
+
     astar(initial_state,final_state,canvas) #Compute the path using A Star Algorithm
+    
     end_time = time.time() #Time taken to run the whole algorithm to find the optimal path
     cv2.waitKey(0) #Waits till a key is pressedy by the user
     cv2.destroyAllWindows() #destroys all opencv windows
