@@ -10,10 +10,12 @@ The path is found from a given start node to goal node and visualized using Open
 
 #Imports
 import copy
+from turtle import width
 import numpy as np
 import cv2
 import heapq as hq
 import time
+import matplotlib.pyplot as plt
 
 def take_inputs(canvas):
     """
@@ -80,14 +82,14 @@ def take_inputs(canvas):
         if(int(initial_angle)<0 or int(initial_angle)>359):
             print("Enter Valid Headway Angle")
         else:
-            initial_state.append(initial_angle)
+            initial_state.append(int(initial_angle))
             break
     while True:
-        final_angle = input("Enter the Initial Head Angle (0 to 360 degrees (multiple of 30 degrees)): ")
+        final_angle = input("Enter the Final Head Angle (0 to 360 degrees (multiple of 30 degrees)): ")
         if(int(final_angle)<0 or int(final_angle)>359):
             print("Enter Valid Headway Angle")
         else:
-            final_state.append(final_angle)
+            final_state.append(int(final_angle))
             break
     while True:
         clearance = input("Enter the clearance ")
@@ -100,9 +102,15 @@ def take_inputs(canvas):
         if(int(robot_radius)<0):
             print("Enter Valid robot_radius")
         else:
-            final_state.append(final_angle)
+            final_state.append(int(robot_radius))
             break
-    return initial_state,final_state
+    while True:
+        step = input("Enter the step size from 1 to 10 ")
+        if(int(step)<1 and int(step)>10):
+            print("Enter Valid step size")
+        else:
+            break
+    return initial_state,final_state,int(step)
 
 def draw_obstacles(canvas):
     """
@@ -135,6 +143,9 @@ def draw_obstacles(canvas):
 
 #Change the data structure to add total cost and cost to goal.
 #Generate action Sets as given in PPT
+def threshold(num):
+    return round(num*2)/2
+
 def action_zero(node,canvas,visited,step): # Local angles
     next_node = node.copy()
     
@@ -142,15 +153,16 @@ def action_zero(node,canvas,visited,step): # Local angles
     if next_angle < 0:
         next_angle += 360 
     next_angle %= 360
-    next_height = round(next_node[0] + step*np.sin(np.deg2rad(next_angle)))
-    next_width = round(next_node[1] + step*np.cos(np.deg2rad(next_angle)))
-    
+    next_width = threshold(next_node[0] + step*np.cos(np.deg2rad(next_angle)))
+    next_height = threshold(next_node[1] + step*np.sin(np.deg2rad(next_angle)))
+    # print("Next Angle ",next_angle)
+    # print("Width, Height: ",next_width,next_height)
 
-    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[next_height][next_angle][0]<255) :
-        next_node[0] = next_height
-        next_node[1] = next_width
+    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[int(round(next_height))][int(round(next_width))][0]<255) :
+        next_node[0] = next_width
+        next_node[1] = next_height
         next_node[2] = next_angle
-        visited[next_height*2][next_width*2][int(next_angle/30)] = 1
+        visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
         return True, next_node
     else:
         return False, next_node
@@ -159,19 +171,20 @@ def action_zero(node,canvas,visited,step): # Local angles
 def action_minus_thirty(node,canvas,visited,step): # Local angles
     next_node = node.copy()
     
-    next_angle = next_node[2] + 30
+    next_angle = next_node[2] - 30
     if next_angle < 0:
         next_angle += 360 
     next_angle %= 360
-    next_height = round(next_node[0] + step*np.sin(np.deg2rad(next_angle)))
-    next_width = round(next_node[1] + step*np.cos(np.deg2rad(next_angle)))
-    
+    next_width = threshold(next_node[0] + step*np.cos(np.deg2rad(next_angle)))
+    next_height = threshold(next_node[1] + step*np.sin(np.deg2rad(next_angle)))
+    # print("Next Angle ",next_angle)
+    # print("Width, Height: ",next_width,next_height)
 
-    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[next_height][next_angle]<255) and (visited[next_height*2][next_width*2][int(next_angle/30)] == 0) :
-        next_node[0] = next_height
-        next_node[1] = next_width
+    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[int(round(next_height))][int(round(next_width))][0]<255) :
+        next_node[0] = next_width
+        next_node[1] = next_height
         next_node[2] = next_angle
-        visited[next_height*2][next_width*2][int(next_angle/30)] = 1
+        visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
         return True, next_node
     else:
         return False, next_node
@@ -180,66 +193,67 @@ def action_minus_thirty(node,canvas,visited,step): # Local angles
 def action_minus_sixty(node,canvas,visited,step): # Local angles
     next_node = node.copy()
     
-    next_angle = next_node[2] + 60
+    next_angle = next_node[2] - 60
     if next_angle < 0:
         next_angle += 360
     
     next_angle %= 360 
-    next_height = round(next_node[0] + step*np.sin(np.deg2rad(next_angle)))
-    next_width = round(next_node[1] + step*np.cos(np.deg2rad(next_angle)))
-    
+    next_width = threshold(next_node[0] + step*np.cos(np.deg2rad(next_angle)))
+    next_height = threshold(next_node[1] + step*np.sin(np.deg2rad(next_angle)))
+    # print("Next Angle ",next_angle)
+    # print("Width, Height: ",next_width,next_height)
 
-    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[next_height][next_angle]<255) :
-        next_node[0] = next_height
-        next_node[1] = next_width
+    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[int(round(next_height))][int(round(next_width))][0]<255) :
+        next_node[0] = next_width
+        next_node[1] = next_height
         next_node[2] = next_angle
-        visited[next_height*2][next_width*2][int(next_angle/30)] = 1
+        visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
         return True, next_node
     else:
         return False, next_node
 
 def action_plus_thirty(node,canvas,visited,step): # Local angles
     next_node = node.copy()
-    
-    next_angle = next_node[2] - 30
+    next_angle = next_node[2] + 30
     if next_angle < 0:
         next_angle += 360 
     next_angle %= 360
-    next_height = round(next_node[0] + step*np.sin(np.deg2rad(next_angle)))
-    next_width = round(next_node[1] + step*np.cos(np.deg2rad(next_angle)))
-    
+    next_width = threshold(next_node[0] + step*np.cos(np.deg2rad(next_angle)))
+    next_height = threshold(next_node[1] + step*np.sin(np.deg2rad(next_angle)))
+    # print("Next Angle ",next_angle)
+    # print("Width, Height: ",next_width,next_height)
 
-    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[next_height][next_angle]<255) :
-        next_node[0] = next_height
-        next_node[1] = next_width
+    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[int(round(next_height))][int(round(next_width))][0]<255) :
+        next_node[0] = next_width
+        next_node[1] = next_height
         next_node[2] = next_angle
-        visited[next_height*2][next_width*2][int(next_angle/30)] = 1
+        visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
         return True, next_node
     else:
         return False, next_node
 
 def action_plus_sixty(node,canvas,visited,step): # Local angles
     next_node = node.copy()
-    
-    next_angle = next_node[2] - 60
+    next_angle = next_node[2] + 60
     if next_angle < 0:
         next_angle += 360
-    next_angle %= 360 
-    next_height = round(next_node[0] + step*np.sin(np.deg2rad(next_angle)))
-    next_width = round(next_node[1] + step*np.cos(np.deg2rad(next_angle)))
-    
+    next_angle %= 360
+    next_width = threshold(next_node[0] + step*np.cos(np.deg2rad(next_angle)))
+    next_height = threshold(next_node[1] + step*np.sin(np.deg2rad(next_angle)))
+    # print("Next Angle ",next_angle)
+    # print("Width, Height: ",next_width,next_height)
 
-    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[next_height][next_angle]<255) :
-        next_node[0] = next_height
-        next_node[1] = next_width
+    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[int(round(next_height))][int(round(next_width))][0]<255) :
+        next_node[0] = next_width
+        next_node[1] = next_height
         next_node[2] = next_angle
-        visited[next_height*2][next_width*2][int(next_angle/30)] = 1
+        visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
         return True, next_node
     else:
         return False, next_node
 
 
-def astar(initial_state,final_state,canvas):
+def astar(initial_state,final_state,canvas,step):
     """
     @brief: This function implements the A* algorithm to find the path between given
     start node and goal node 
@@ -256,8 +270,23 @@ def astar(initial_state,final_state,canvas):
     visited_nodes =np.zeros((500,800,12))
     hq.heapify(open_list)
     hq.heappush(open_list,[0,initial_state,initial_state])
-
-    flag,n_state
+    node = hq.heappop(open_list)
+    print(node)
+    flag,n_state = action_plus_sixty(node[2],canvas,visited_nodes,step)
+    # if(flag):
+    print(flag,n_state)
+    flag,n_state = action_plus_thirty(node[2],canvas,visited_nodes,step)
+    # if(flag):
+    print(flag,n_state)
+    flag,n_state = action_zero(node[2],canvas,visited_nodes,step)
+    # if(flag):
+    print(flag,n_state)
+    flag,n_state = action_minus_thirty(node[2],canvas,visited_nodes,step)
+    # if(flag):
+    print(flag,n_state)
+    flag,n_state = action_minus_sixty(node[2],canvas,visited_nodes,step)
+    # if(flag):
+    print(flag,n_state)
 
     # while(len(open_list)>0):
     #     # 0: cost, 1: parent node, 2: present node
@@ -324,17 +353,19 @@ if __name__ == '__main__':
     start_time = time.time() #Gives the time at which the program has started
     canvas = np.ones((250,400,3),dtype="uint8") #Creating a blank canvas
     canvas = draw_obstacles(canvas) #Draw the obstacles in the canvas
+    plt.imshow(canvas)
+    plt.show()
     #Uncomment the below lines to see the obstacle space. Press Any Key to close the image window
     # cv2.imshow("Canvas",canvas)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
-    initial_state,final_state = take_inputs(canvas) #Take the start and goal node from the user
+    initial_state,final_state,step = take_inputs(canvas) #Take the start and goal node from the user
     #Changing the cartesian coordinates to image coordinates:
     initial_state[1] = canvas.shape[0]-1 - initial_state[1]
     final_state[1] = canvas.shape[0]-1 - final_state[1]
     # print(initial_state,final_state,start_angle,goal_angle)
 
-    astar(initial_state,final_state,canvas) #Compute the path using A Star Algorithm
+    astar(initial_state,final_state,canvas,step) #Compute the path using A Star Algorithm
     
     end_time = time.time() #Time taken to run the whole algorithm to find the optimal path
     cv2.waitKey(0) #Waits till a key is pressedy by the user
