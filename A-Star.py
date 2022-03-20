@@ -284,7 +284,6 @@ def action_plus_sixty(node,canvas,visited,step): # Local angles
     else:
         return False, next_node,False
 
-
 def astar(initial_state,final_state,canvas,step):
     """
     @brief: This function implements the A* algorithm to find the path between given
@@ -416,8 +415,6 @@ def astar(initial_state,final_state,canvas,step):
     if not back_track_flag:    
         print("No Solution Found")
         print("Total Number of nodes Explored = ",len(closed_list))    
-
-
 
 def back_track(initial_state,final_state,closed_list,canvas):
     """
