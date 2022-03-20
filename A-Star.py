@@ -30,7 +30,7 @@ def take_inputs(canvas):
     final_angle = 0
     clearance = 0
     robot_radius = 0
-    step_size = 0
+    step = 0
     while True:
         while True:
             state = input("Enter the X Coordinate of Start Node: ")
@@ -109,9 +109,9 @@ def take_inputs(canvas):
             print("Enter Valid step size")
         else:
             break
-    return initial_state,final_state,int(step)
+    return initial_state,final_state,int(step),int(clearance),int(robot_radius)
 
-def draw_obstacles(canvas):
+def draw_obstacles(canvas,clr=5):
     """
     @brief: This function goes through each node in the canvas image and checks for the
     obstacle space using the half plane equations. 
@@ -127,16 +127,16 @@ def draw_obstacles(canvas):
     # print(shape)
     for i in range(width):
         for j in range(height):
-            if(i-5<=0) or (i-395>=0) or (j-5<=0) or (j-245>=0):
+            if(i<=clr) or (i>=(400-clr)) or (j<=clr) or (j>=(250-clr)):
                 canvas[j][i] = [255,0,0]
 
-            if ((i-300)**2+(j-65)**2-(45**2))<=0:
+            if ((i-300)**2+(j-65)**2-((40+clr)**2))<=0:
                 canvas[j][i] = [255,0,0]
             
-            if (j+(0.57*i)-218.53)>=0 and (j-(0.57*i)+10.04)>=0 and (i-240)<=0 and (j+(0.57*i)-310.04)<=0 and (j-(0.57*i)-81.465)<=0 and (i-160)>=0:
+            if (j+(0.57*i)-213.53)>=clr and (j-(0.57*i)+5.04+clr)>=0 and (i-235-clr)<=0 and (j+(0.57*i)-305.04-clr)<=0 and (j-(0.57*i)-76.465-clr)<=0 and (i-155-clr)>=0:
                 canvas[j][i] = [255,0,0]
 
-            if ((j+(0.316*i)-71.1483)>=0 and (j+(0.857*i)-145.156)<=0 and (j-(0.114*i)-60.909)<=0) or ((j-(1.23*i)-28.576)<=0 and (j-(3.2*i)+202.763)>=0 and (j-(0.114*i)-60.909)>=0):
+            if ((j+(0.316*i)-66.1483-clr)>=0 and (j+(0.857*i)-140.156-clr)<=0 and (j-(0.114*i)-55.909-clr)<=0) or ((j-(1.23*i)-23.576-clr)<=0 and (j-(3.2*i)+197.763+clr)>=0 and (j-(0.114*i)-55.909-clr)>=0):
                 canvas[j][i] = [255,0,0]
     return canvas
 
@@ -156,7 +156,7 @@ def cost_to_goal(node,final):
 
 def check_obstacle(next_width,next_height,canvas):    
     if canvas[int(round(next_height))][int(round(next_width))][0]==255:
-        print("In obstacle")
+        # print("In obstacle")
         return False
     else:
         return True
@@ -303,13 +303,13 @@ def astar(initial_state,final_state,canvas,step):
     present_c2g = cost_to_goal(initial_state,final_state)
     total_cost = present_c2c+present_c2g
     hq.heappush(open_list,[total_cost,present_c2c,present_c2g,initial_state,initial_state])
-    counter=0
-    while True:
+    while len(open_list)!=0:
         node = hq.heappop(open_list)
-        print("\nPopped node: ",node)
+        # print("\nPopped node: ",node)
         closed_list[tuple(node[4])] = node[3]
         if(check_goal(node[4],final_state)):
             print("Goal Reached")
+            back_track_flag = True
             back_track(initial_state,node[4],closed_list,canvas)
             break
         # print(closed_list)
@@ -411,8 +411,9 @@ def astar(initial_state,final_state,canvas,step):
                     # print("No duplicate")
                     hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
                     hq.heapify(open_list)
-        
-        
+    if not back_track_flag:    
+        print("No Solution Found")
+        print("Total Number of nodes Explored = ",len(closed_list))    
 
     # if(back_track_flag):
     #     #Call the backtrack function
@@ -436,7 +437,7 @@ def back_track(initial_state,final_state,closed_list,canvas):
     #Creating video writer to generate a video.
     # fourcc = cv2.VideoWriter_fourcc(*'XVID')
     # out = cv2.VideoWriter('Dijkstra-KumaraRitvik-Oruganti.avi',fourcc,1000,(canvas.shape[1],canvas.shape[0]))
-    
+    print("Total Number of nodes Explored = ",len(closed_list)) 
     keys = closed_list.keys() #Returns all the nodes that are explored
     path_stack = [] #Stack to store the path from start to goal
     keys = list(keys)
@@ -445,11 +446,16 @@ def back_track(initial_state,final_state,closed_list,canvas):
     keys.remove(s_node)
     keys.remove(next_node)
     for key in keys:
+        if(canvas[int(s_node[1])][int(s_node[0])][0]==255):
+            print("Drawing in obstacle")
+        if(canvas[int(next_node[1])][int(next_node[0])][0]==255):
+            print("Drawing in obstacle")
+        cv2.circle(canvas,(int(s_node[0]),int(s_node[1])),2,(0,0,255),-1)
         canvas = cv2.arrowedLine(canvas, (int(s_node[0]),int(s_node[1])), (int(next_node[0]),int(next_node[1])),(0,255,0), 1,tipLength = 0.5)
         s_node = next_node
         next_node = key
         cv2.imshow("viz",canvas)
-        cv2.waitKey(1)
+        cv2.waitKey(1000)
     
         # canvas[key[1]][key[0]] = [255,255,255] #Denoting the explored nodes with white color
         # cv2.imshow("Nodes Exploration",canvas)
@@ -468,9 +474,12 @@ def back_track(initial_state,final_state,closed_list,canvas):
     # cv2.circle(canvas,tuple(final_state),3,(0,0,255),-1)
     path_stack.append(initial_state) #Appending the initial state because of the loop breaking condition
     print("Optimal Path: ")
+    start_node = path_stack.pop()
     while(len(path_stack)>0):
         path_node = path_stack.pop()
+        cv2.line(canvas,(int(start_node[0]),int(start_node[1])),(int(path_node[0]),int(path_node[1])),(0,0,255),1)
         print(path_node)
+        start_node = path_node.copy()
     #     canvas[path_node[1]][path_node[0]] = [19,209,158]
     #     out.write(canvas)
     
@@ -481,13 +490,12 @@ if __name__ == '__main__':
      #Gives the time at which the program has started
     canvas = np.ones((250,400,3),dtype="uint8") #Creating a blank canvas
     canvas = draw_obstacles(canvas) #Draw the obstacles in the canvas
-    plt.imshow(canvas)
-    plt.show()
     #Uncomment the below lines to see the obstacle space. Press Any Key to close the image window
     # cv2.imshow("Canvas",canvas)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
-    initial_state,final_state,step = take_inputs(canvas) #Take the start and goal node from the user
+    initial_state,final_state,step,clearance,robot_radius = take_inputs(canvas) #Take the start and goal node from the user
+    canvas = draw_obstacles(canvas,clr = clearance+robot_radius)
     #Changing the cartesian coordinates to image coordinates:
     initial_state[1] = canvas.shape[0]-1 - initial_state[1]
     final_state[1] = canvas.shape[0]-1 - final_state[1]
