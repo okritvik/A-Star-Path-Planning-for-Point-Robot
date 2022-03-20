@@ -146,7 +146,7 @@ def threshold(num):
     return round(num*2)/2
 
 def check_goal(node,final):
-    if(np.sqrt(np.power(node[0]-final[0],2)+np.power(node[1]-final[1],2))<1.5) and (node[2]==final[2]):
+    if(np.sqrt(np.power(node[0]-final[0],2)+np.power(node[1]-final[1],2))<1.5):# and (node[2]==final[2]):
         return True
     else:
         return False
@@ -441,21 +441,23 @@ def back_track(initial_state,final_state,closed_list,canvas):
     keys = closed_list.keys() #Returns all the nodes that are explored
     path_stack = [] #Stack to store the path from start to goal
     keys = list(keys)
-    s_node = keys[0]
-    next_node = keys[1]
-    keys.remove(s_node)
-    keys.remove(next_node)
+    # s_node = keys[0]
+    # next_node = keys[1]
+    # keys.remove(s_node)
+    # keys.remove(next_node)
     for key in keys:
-        if(canvas[int(s_node[1])][int(s_node[0])][0]==255):
-            print("Drawing in obstacle")
-        if(canvas[int(next_node[1])][int(next_node[0])][0]==255):
-            print("Drawing in obstacle")
-        cv2.circle(canvas,(int(s_node[0]),int(s_node[1])),2,(0,0,255),-1)
-        canvas = cv2.arrowedLine(canvas, (int(s_node[0]),int(s_node[1])), (int(next_node[0]),int(next_node[1])),(0,255,0), 1,tipLength = 0.5)
-        s_node = next_node
-        next_node = key
+        # if(canvas[int(s_node[1])][int(s_node[0])][0]==255):
+        #     print("Drawing in obstacle")
+        # if(canvas[int(next_node[1])][int(next_node[0])][0]==255):
+        #     print("Drawing in obstacle")
+        p_node = closed_list[tuple(key)]
+        cv2.circle(canvas,(int(key[0]),int(key[1])),2,(0,0,255),-1)
+        cv2.circle(canvas,(int(p_node[0]),int(p_node[1])),2,(0,0,255),-1)
+        # print((int(key[0]),int(key[1])))
+        # print(int(closed_list[tuple(key)][0]))
+        canvas = cv2.arrowedLine(canvas, (int(p_node[0]),int(p_node[1])), (int(key[0]),int(key[1])), (0,255,0), 1, tipLength = 0.2)
         cv2.imshow("viz",canvas)
-        cv2.waitKey(1000)
+        cv2.waitKey(1)
     
         # canvas[key[1]][key[0]] = [255,255,255] #Denoting the explored nodes with white color
         # cv2.imshow("Nodes Exploration",canvas)
@@ -477,7 +479,7 @@ def back_track(initial_state,final_state,closed_list,canvas):
     start_node = path_stack.pop()
     while(len(path_stack)>0):
         path_node = path_stack.pop()
-        cv2.line(canvas,(int(start_node[0]),int(start_node[1])),(int(path_node[0]),int(path_node[1])),(0,0,255),1)
+        cv2.line(canvas,(int(start_node[0]),int(start_node[1])),(int(path_node[0]),int(path_node[1])),(255,0,196),2)
         print(path_node)
         start_node = path_node.copy()
     #     canvas[path_node[1]][path_node[0]] = [19,209,158]
