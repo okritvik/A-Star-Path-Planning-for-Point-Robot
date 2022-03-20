@@ -48,12 +48,13 @@ def take_inputs(canvas):
             else:
                 initial_state.append(int(state))
                 break
+        break
         # print(canvas[canvas.shape[0]-1 - initial_state[1]][initial_state[0]])
-        if(canvas[canvas.shape[0]-1 - initial_state[1]][initial_state[0]][0]==255):
-            print("The entered start node is in the obstacle space")
-            initial_state.clear()
-        else:
-            break
+        # if(canvas[canvas.shape[0]-1 - initial_state[1]][initial_state[0]][0]==255):
+        #     print("The entered start node is in the obstacle space")
+        #     initial_state.clear()
+        # else:
+        #     break
     while True:
         while True:
             state = input("Enter the X Coordinate of Goal Node: ")
@@ -71,40 +72,41 @@ def take_inputs(canvas):
             else:
                 final_state.append(int(state))
             break
+        break
         # print(canvas[canvas.shape[0]-1 - final_state[1]][final_state[0]])
-        if(canvas[canvas.shape[0]-1 - final_state[1]][final_state[0]][0]==255):
-            print("The entered goal node is in the obstacle space")
-            final_state.clear()
-        else:
-            break
+        # if(canvas[canvas.shape[0]-1 - final_state[1]][final_state[0]][0]==255):
+        #     print("The entered goal node is in the obstacle space")
+        #     final_state.clear()
+        # else:
+        #     break
     while True:
         initial_angle = input("Enter the Initial Head Angle (0 to 360 degrees (multiple of 30 degrees)): ")
-        if(int(initial_angle)<0 or int(initial_angle)>359):
+        if(int(initial_angle)<0 or int(initial_angle)>359 or (int(initial_angle)%30 != 0)):
             print("Enter Valid Headway Angle")
         else:
             initial_state.append(int(initial_angle))
             break
     while True:
         final_angle = input("Enter the Final Head Angle (0 to 360 degrees (multiple of 30 degrees)): ")
-        if(int(final_angle)<0 or int(final_angle)>359):
+        if(int(final_angle)<0 or int(final_angle)>359 or (int(final_angle)%30 != 0)):
             print("Enter Valid Headway Angle")
         else:
             final_state.append(int(final_angle))
             break
     while True:
-        clearance = input("Enter the clearance ")
+        clearance = input("Enter the clearance: ")
         if(int(clearance)<0):
             print("Enter Valid Clearance")
         else:
             break
     while True:
-        robot_radius = input("Enter the robot radius ")
+        robot_radius = input("Enter the robot radius: ")
         if(int(robot_radius)<0):
             print("Enter Valid robot_radius")
         else:
             break
     while True:
-        step = input("Enter the step size from 1 to 10 ")
+        step = input("Enter the step size from 1 to 10: ")
         if(int(step)<1 and int(step)>10):
             print("Enter Valid step size")
         else:
@@ -415,12 +417,6 @@ def astar(initial_state,final_state,canvas,step):
         print("No Solution Found")
         print("Total Number of nodes Explored = ",len(closed_list))    
 
-    # if(back_track_flag):
-    #     #Call the backtrack function
-    #     back_track(initial_state,final_state,closed_list,canvas)
-
-    # else:
-    #     print("Solution Cannot Be Found")
 
 
 def back_track(initial_state,final_state,closed_list,canvas):
@@ -451,8 +447,6 @@ def back_track(initial_state,final_state,closed_list,canvas):
         cv2.imshow("viz",canvas)
         cv2.waitKey(1)
     
-        # canvas[key[1]][key[0]] = [255,255,255] #Denoting the explored nodes with white color
-        # cv2.imshow("Nodes Exploration",canvas)
         # cv2.waitKey(1)
         out.write(canvas)
     parent_node = closed_list[tuple(final_state)]
@@ -462,10 +456,7 @@ def back_track(initial_state,final_state,closed_list,canvas):
         # canvas[parent_node[1]][parent_node[0]] = [19,209,158]
         path_stack.append(parent_node)
         parent_node = closed_list[tuple(parent_node)]
-    #     # cv2.imshow("Path",canvas)
-    #     # cv2.waitKey(1)
-    # cv2.circle(canvas,tuple(initial_state),3,(0,255,0),-1)
-    # cv2.circle(canvas,tuple(final_state),3,(0,0,255),-1)
+    
     path_stack.append(initial_state) #Appending the initial state because of the loop breaking condition
     print("Optimal Path: ")
     start_node = path_stack.pop()
@@ -499,6 +490,10 @@ if __name__ == '__main__':
     if final_state[2]!=0:
         final_state[2] = 360 - final_state[2]
     print(initial_state,final_state)
+    #Write a condition to check if the initial state and final state are in the obstacle space and exit from program and ask to rerun with valid start and goal positions
+    if(canvas[initial_state[1]][initial_state[0]][0]==255 or canvas[final_state[1]][final_state[0]][0]==255):
+        print("Given Start or Goal Node is in the Obstacle Region. Please re-run with Valid Coordinates")
+        exit()
     start_time = time.time()
     cv2.circle(canvas,(int(initial_state[0]),int(initial_state[1])),2,(0,0,255),-1)
     cv2.circle(canvas,(int(final_state[0]),int(final_state[1])),2,(0,0,255),-1)
