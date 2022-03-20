@@ -146,7 +146,7 @@ def threshold(num):
     return round(num*2)/2
 
 def check_goal(node,final):
-    if(np.sqrt(np.power(node[0]-final[0],2)+np.power(node[1]-final[1],2))<1.5):# and (node[2]==final[2]):
+    if(np.sqrt(np.power(node[0]-final[0],2)+np.power(node[1]-final[1],2))<1.5) and (node[2]==final[2]):
         return True
     else:
         return False
@@ -491,7 +491,7 @@ def back_track(initial_state,final_state,closed_list,canvas):
 if __name__ == '__main__':
      #Gives the time at which the program has started
     canvas = np.ones((250,400,3),dtype="uint8") #Creating a blank canvas
-    canvas = draw_obstacles(canvas) #Draw the obstacles in the canvas
+    canvas = draw_obstacles(canvas) #Draw the obstacles in the canvas, default point robot with 5 units of clearance
     #Uncomment the below lines to see the obstacle space. Press Any Key to close the image window
     # cv2.imshow("Canvas",canvas)
     # cv2.waitKey(0)
@@ -501,8 +501,15 @@ if __name__ == '__main__':
     #Changing the cartesian coordinates to image coordinates:
     initial_state[1] = canvas.shape[0]-1 - initial_state[1]
     final_state[1] = canvas.shape[0]-1 - final_state[1]
+    #Converting the angles with respect to the image coordinates
+    if initial_state[2]!=0:
+        initial_state[2] = 360 - final_state[2]
+    if final_state[2]!=0:
+        final_state[2] = 360 - final_state[2]
     print(initial_state,final_state)
     start_time = time.time()
+    cv2.circle(canvas,(int(initial_state[0]),int(initial_state[1])),2,(0,0,255),-1)
+    cv2.circle(canvas,(int(final_state[0]),int(final_state[1])),2,(0,0,255),-1)
     astar(initial_state,final_state,canvas,step) #Compute the path using A Star Algorithm
     
     end_time = time.time() #Time taken to run the whole algorithm to find the optimal path
