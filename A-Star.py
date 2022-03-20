@@ -102,7 +102,6 @@ def take_inputs(canvas):
         if(int(robot_radius)<0):
             print("Enter Valid robot_radius")
         else:
-            final_state.append(int(robot_radius))
             break
     while True:
         step = input("Enter the step size from 1 to 10 ")
@@ -146,6 +145,22 @@ def draw_obstacles(canvas):
 def threshold(num):
     return round(num*2)/2
 
+def check_goal(node,final):
+    if(np.sqrt(np.power(node[0]-final[0],2)+np.power(node[1]-final[1],2))<1.5) and (node[2]==final[2]):
+        return True
+    else:
+        return False
+
+def cost_to_goal(node,final):
+    return np.sqrt(np.power(node[0]-final[0],2)+np.power(node[1]-final[1],2))
+
+def check_obstacle(next_width,next_height,canvas):    
+    if canvas[int(round(next_height))][int(round(next_width))][0]==255:
+        print("In obstacle")
+        return False
+    else:
+        return True
+
 def action_zero(node,canvas,visited,step): # Local angles
     next_node = node.copy()
     
@@ -158,20 +173,23 @@ def action_zero(node,canvas,visited,step): # Local angles
     # print("Next Angle ",next_angle)
     # print("Width, Height: ",next_width,next_height)
 
-    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[int(round(next_height))][int(round(next_width))][0]<255) :
+    if (round(next_height)>0 and round(next_height)<canvas.shape[0]) and (round(next_width)>0 and round(next_width)<canvas.shape[1]) and (check_obstacle(next_width,next_height,canvas)) :
         next_node[0] = next_width
         next_node[1] = next_height
         next_node[2] = next_angle
-        visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
-        return True, next_node
+        if(visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] == 1):
+            return True, next_node,True
+        else:
+            visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
+            return True, next_node,False
     else:
-        return False, next_node
+        return False, next_node,False
     
 
 def action_minus_thirty(node,canvas,visited,step): # Local angles
     next_node = node.copy()
     
-    next_angle = next_node[2] - 30
+    next_angle = next_node[2] + 30 # Cartesian System
     if next_angle < 0:
         next_angle += 360 
     next_angle %= 360
@@ -180,20 +198,23 @@ def action_minus_thirty(node,canvas,visited,step): # Local angles
     # print("Next Angle ",next_angle)
     # print("Width, Height: ",next_width,next_height)
 
-    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[int(round(next_height))][int(round(next_width))][0]<255) :
+    if (round(next_height)>0 and round(next_height)<canvas.shape[0]) and (round(next_width)>0 and round(next_width)<canvas.shape[1]) and (check_obstacle(next_width,next_height,canvas)) :
         next_node[0] = next_width
         next_node[1] = next_height
         next_node[2] = next_angle
-        visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
-        return True, next_node
+        if(visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] == 1):
+            return True, next_node,True
+        else:
+            visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
+            return True, next_node,False
     else:
-        return False, next_node
+        return False, next_node,False
 
 
 def action_minus_sixty(node,canvas,visited,step): # Local angles
     next_node = node.copy()
     
-    next_angle = next_node[2] - 60
+    next_angle = next_node[2] + 60 #cartesian System
     if next_angle < 0:
         next_angle += 360
     
@@ -203,18 +224,21 @@ def action_minus_sixty(node,canvas,visited,step): # Local angles
     # print("Next Angle ",next_angle)
     # print("Width, Height: ",next_width,next_height)
 
-    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[int(round(next_height))][int(round(next_width))][0]<255) :
+    if (round(next_height)>0 and round(next_height)<canvas.shape[0]) and (round(next_width)>0 and round(next_width)<canvas.shape[1]) and (check_obstacle(next_width,next_height,canvas)) :
         next_node[0] = next_width
         next_node[1] = next_height
         next_node[2] = next_angle
-        visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
-        return True, next_node
+        if(visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] == 1):
+            return True, next_node,True
+        else:
+            visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
+            return True, next_node,False
     else:
-        return False, next_node
+        return False, next_node,False
 
 def action_plus_thirty(node,canvas,visited,step): # Local angles
     next_node = node.copy()
-    next_angle = next_node[2] + 30
+    next_angle = next_node[2] - 30 #cartesian system
     if next_angle < 0:
         next_angle += 360 
     next_angle %= 360
@@ -223,18 +247,21 @@ def action_plus_thirty(node,canvas,visited,step): # Local angles
     # print("Next Angle ",next_angle)
     # print("Width, Height: ",next_width,next_height)
 
-    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[int(round(next_height))][int(round(next_width))][0]<255) :
+    if (round(next_height)>0 and round(next_height)<canvas.shape[0]) and (round(next_width)>0 and round(next_width)<canvas.shape[1]) and (check_obstacle(next_width,next_height,canvas)) :
         next_node[0] = next_width
         next_node[1] = next_height
         next_node[2] = next_angle
-        visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
-        return True, next_node
+        if(visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] == 1):
+            return True, next_node,True
+        else:
+            visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
+            return True, next_node,False
     else:
-        return False, next_node
+        return False, next_node,False
 
 def action_plus_sixty(node,canvas,visited,step): # Local angles
     next_node = node.copy()
-    next_angle = next_node[2] + 60
+    next_angle = next_node[2] - 60 #cartesian System
     if next_angle < 0:
         next_angle += 360
     next_angle %= 360
@@ -243,14 +270,17 @@ def action_plus_sixty(node,canvas,visited,step): # Local angles
     # print("Next Angle ",next_angle)
     # print("Width, Height: ",next_width,next_height)
 
-    if (next_height>0 and next_height<canvas.shape[0]) and (next_width>0 and next_width<canvas.shape[1]) and (canvas[int(round(next_height))][int(round(next_width))][0]<255) :
+    if (round(next_height)>0 and round(next_height)<canvas.shape[0]) and (round(next_width)>0 and round(next_width)<canvas.shape[1]) and (check_obstacle(next_width,next_height,canvas)) :
         next_node[0] = next_width
         next_node[1] = next_height
         next_node[2] = next_angle
-        visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
-        return True, next_node
+        if(visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] == 1):
+            return True, next_node,True
+        else:
+            visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
+            return True, next_node,False
     else:
-        return False, next_node
+        return False, next_node,False
 
 
 def astar(initial_state,final_state,canvas,step):
@@ -269,35 +299,120 @@ def astar(initial_state,final_state,canvas,step):
     back_track_flag = False
     visited_nodes =np.zeros((500,800,12))
     hq.heapify(open_list)
-    hq.heappush(open_list,[0,initial_state,initial_state])
-    node = hq.heappop(open_list)
-    print(node)
-    flag,n_state = action_plus_sixty(node[2],canvas,visited_nodes,step)
-    # if(flag):
-    print(flag,n_state)
-    flag,n_state = action_plus_thirty(node[2],canvas,visited_nodes,step)
-    # if(flag):
-    print(flag,n_state)
-    flag,n_state = action_zero(node[2],canvas,visited_nodes,step)
-    # if(flag):
-    print(flag,n_state)
-    flag,n_state = action_minus_thirty(node[2],canvas,visited_nodes,step)
-    # if(flag):
-    print(flag,n_state)
-    flag,n_state = action_minus_sixty(node[2],canvas,visited_nodes,step)
-    # if(flag):
-    print(flag,n_state)
+    present_c2c = 0
+    present_c2g = cost_to_goal(initial_state,final_state)
+    total_cost = present_c2c+present_c2g
+    hq.heappush(open_list,[total_cost,present_c2c,present_c2g,initial_state,initial_state])
+    counter=0
+    while True:
+        node = hq.heappop(open_list)
+        print("\nPopped node: ",node)
+        closed_list[tuple(node[4])] = node[3]
+        if(check_goal(node[4],final_state)):
+            print("Goal Reached")
+            back_track(initial_state,node[4],closed_list,canvas)
+            break
+        # print(closed_list)
+        # print(len(open_list))
+        present_c2c = node[1]
+        present_c2g = node[2]
+        total_cost = node[0]
+        flag,n_state,dup = action_plus_sixty(node[4],canvas,visited_nodes,step)
+        if(flag):
+            if tuple(n_state) not in closed_list:
+                if(dup):
+                    for i in range(len(open_list)):
+                        if tuple(open_list[i][4]) == tuple(n_state):
+                            # print("Duplicate Found")
+                            cost = present_c2c+step+cost_to_goal(n_state,final_state)
+                            if(cost<open_list[i][0]):
+                                open_list[i][1] = present_c2c+step
+                                open_list[i][0] = cost
+                                open_list[i][3] = node[4]
+                                hq.heapify(open_list)
+                            break
+                else:
+                    # print("No duplicate")
+                    hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
+                    hq.heapify(open_list)
 
-    # while(len(open_list)>0):
-    #     # 0: cost, 1: parent node, 2: present node
-    #     node = hq.heappop(open_list)
-    #     # print(node)
-    #     closed_list[(node[2][0],node[2][1])] = node[1] #Converted to tuple because the key for dictionary should be immutable
-    #     present_cost = node[0] #Present node cost to come
-    #     if list(node[2]) == final_state: #Checks if the popped node is goal node
-    #         back_track_flag = True
-    #         print("Back Track") #Back tracking starts
-    #         break #come out of the while loop
+        flag,n_state,dup = action_plus_thirty(node[4],canvas,visited_nodes,step)
+        if(flag):
+            if tuple(n_state) not in closed_list:
+                if(dup):
+                    for i in range(len(open_list)):
+                        if tuple(open_list[i][4]) == tuple(n_state):
+                            # print("Duplicate Found")
+                            cost = present_c2c+step+cost_to_goal(n_state,final_state)
+                            if(cost<open_list[i][0]):
+                                open_list[i][1] = present_c2c+step
+                                open_list[i][0] = cost
+                                open_list[i][3] = node[4]
+                                hq.heapify(open_list)
+                            break
+                else:
+                    # print("No duplicate")
+                    hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
+                    hq.heapify(open_list)
+                
+        flag,n_state,dup = action_zero(node[4],canvas,visited_nodes,step)
+        if(flag):
+            if tuple(n_state) not in closed_list:
+                if(dup):
+                    for i in range(len(open_list)):
+                        if tuple(open_list[i][4]) == tuple(n_state):
+                            # print("Duplicate Found")
+                            cost = present_c2c+step+cost_to_goal(n_state,final_state)
+                            if(cost<open_list[i][0]):
+                                open_list[i][1] = present_c2c+step
+                                open_list[i][0] = cost
+                                open_list[i][3] = node[4]
+                                hq.heapify(open_list)
+                            break
+                else:
+                    # print("No duplicate")
+                    hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
+                    hq.heapify(open_list)
+
+        flag,n_state,dup = action_minus_thirty(node[4],canvas,visited_nodes,step)
+        if(flag):
+            if tuple(n_state) not in closed_list:
+                if(dup):
+                    for i in range(len(open_list)):
+                        if tuple(open_list[i][4]) == tuple(n_state):
+                            # print("Duplicate Found")
+                            cost = present_c2c+step+cost_to_goal(n_state,final_state)
+                            if(cost<open_list[i][0]):
+                                open_list[i][1] = present_c2c+step
+                                open_list[i][0] = cost
+                                open_list[i][3] = node[4]
+                                hq.heapify(open_list)
+                            break
+                else:
+                    # print("No duplicate")
+                    hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
+                    hq.heapify(open_list)
+
+        flag,n_state,dup = action_minus_sixty(node[4],canvas,visited_nodes,step)
+        if(flag):
+            if tuple(n_state) not in closed_list:
+                if(dup):
+                    for i in range(len(open_list)):
+                        if tuple(open_list[i][4]) == tuple(n_state):
+                            # print("Duplicate Found")
+                            cost = present_c2c+step+cost_to_goal(n_state,final_state)
+                            if(cost<open_list[i][0]):
+                                open_list[i][1] = present_c2c+step
+                                open_list[i][0] = cost
+                                open_list[i][3] = node[4]
+                                hq.heapify(open_list)
+                            break
+                else:
+                    # print("No duplicate")
+                    hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
+                    hq.heapify(open_list)
+        
+        
 
     # if(back_track_flag):
     #     #Call the backtrack function
@@ -319,16 +434,27 @@ def back_track(initial_state,final_state,closed_list,canvas):
     :param canvas: Canvas Image 
     """
     #Creating video writer to generate a video.
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('Dijkstra-KumaraRitvik-Oruganti.avi',fourcc,1000,(canvas.shape[1],canvas.shape[0]))
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # out = cv2.VideoWriter('Dijkstra-KumaraRitvik-Oruganti.avi',fourcc,1000,(canvas.shape[1],canvas.shape[0]))
     
     keys = closed_list.keys() #Returns all the nodes that are explored
     path_stack = [] #Stack to store the path from start to goal
+    keys = list(keys)
+    s_node = keys[0]
+    next_node = keys[1]
+    keys.remove(s_node)
+    keys.remove(next_node)
     for key in keys:
-        canvas[key[1]][key[0]] = [255,255,255] #Denoting the explored nodes with white color
-        cv2.imshow("Nodes Exploration",canvas)
+        canvas = cv2.arrowedLine(canvas, (int(s_node[0]),int(s_node[1])), (int(next_node[0]),int(next_node[1])),(0,255,0), 1,tipLength = 0.5)
+        s_node = next_node
+        next_node = key
+        cv2.imshow("viz",canvas)
         cv2.waitKey(1)
-        out.write(canvas)
+    
+        # canvas[key[1]][key[0]] = [255,255,255] #Denoting the explored nodes with white color
+        # cv2.imshow("Nodes Exploration",canvas)
+        # cv2.waitKey(1)
+        # out.write(canvas)
     parent_node = closed_list[tuple(final_state)]
     path_stack.append(final_state) #Appending the final state because of the loop starting condition
     while(parent_node!=initial_state):
@@ -336,21 +462,23 @@ def back_track(initial_state,final_state,closed_list,canvas):
         # canvas[parent_node[1]][parent_node[0]] = [19,209,158]
         path_stack.append(parent_node)
         parent_node = closed_list[tuple(parent_node)]
-        # cv2.imshow("Path",canvas)
-        # cv2.waitKey(1)
-    cv2.circle(canvas,tuple(initial_state),3,(0,255,0),-1)
-    cv2.circle(canvas,tuple(final_state),3,(0,0,255),-1)
+    #     # cv2.imshow("Path",canvas)
+    #     # cv2.waitKey(1)
+    # cv2.circle(canvas,tuple(initial_state),3,(0,255,0),-1)
+    # cv2.circle(canvas,tuple(final_state),3,(0,0,255),-1)
     path_stack.append(initial_state) #Appending the initial state because of the loop breaking condition
+    print("Optimal Path: ")
     while(len(path_stack)>0):
         path_node = path_stack.pop()
-        canvas[path_node[1]][path_node[0]] = [19,209,158]
-        out.write(canvas)
+        print(path_node)
+    #     canvas[path_node[1]][path_node[0]] = [19,209,158]
+    #     out.write(canvas)
     
-    cv2.imshow("Nodes Exploration",canvas)
-    out.release()
+    # cv2.imshow("Nodes Exploration",canvas)
+    # out.release()
 
 if __name__ == '__main__':
-    start_time = time.time() #Gives the time at which the program has started
+     #Gives the time at which the program has started
     canvas = np.ones((250,400,3),dtype="uint8") #Creating a blank canvas
     canvas = draw_obstacles(canvas) #Draw the obstacles in the canvas
     plt.imshow(canvas)
@@ -363,11 +491,12 @@ if __name__ == '__main__':
     #Changing the cartesian coordinates to image coordinates:
     initial_state[1] = canvas.shape[0]-1 - initial_state[1]
     final_state[1] = canvas.shape[0]-1 - final_state[1]
-    # print(initial_state,final_state,start_angle,goal_angle)
-
+    print(initial_state,final_state)
+    start_time = time.time()
     astar(initial_state,final_state,canvas,step) #Compute the path using A Star Algorithm
     
     end_time = time.time() #Time taken to run the whole algorithm to find the optimal path
-    cv2.waitKey(0) #Waits till a key is pressedy by the user
-    cv2.destroyAllWindows() #destroys all opencv windows
+    cv2.imshow("viz",canvas)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     print("Code Execution Time: ",end_time-start_time) #Prints the total execution time
