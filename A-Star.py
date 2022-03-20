@@ -435,21 +435,13 @@ def back_track(initial_state,final_state,closed_list,canvas):
     :param canvas: Canvas Image 
     """
     #Creating video writer to generate a video.
-    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    # out = cv2.VideoWriter('Dijkstra-KumaraRitvik-Oruganti.avi',fourcc,1000,(canvas.shape[1],canvas.shape[0]))
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('A-Star-amalapak-okritvik.avi',fourcc,1000,(canvas.shape[1],canvas.shape[0]))
     print("Total Number of nodes Explored = ",len(closed_list)) 
     keys = closed_list.keys() #Returns all the nodes that are explored
     path_stack = [] #Stack to store the path from start to goal
     keys = list(keys)
-    # s_node = keys[0]
-    # next_node = keys[1]
-    # keys.remove(s_node)
-    # keys.remove(next_node)
     for key in keys:
-        # if(canvas[int(s_node[1])][int(s_node[0])][0]==255):
-        #     print("Drawing in obstacle")
-        # if(canvas[int(next_node[1])][int(next_node[0])][0]==255):
-        #     print("Drawing in obstacle")
         p_node = closed_list[tuple(key)]
         cv2.circle(canvas,(int(key[0]),int(key[1])),2,(0,0,255),-1)
         cv2.circle(canvas,(int(p_node[0]),int(p_node[1])),2,(0,0,255),-1)
@@ -462,7 +454,7 @@ def back_track(initial_state,final_state,closed_list,canvas):
         # canvas[key[1]][key[0]] = [255,255,255] #Denoting the explored nodes with white color
         # cv2.imshow("Nodes Exploration",canvas)
         # cv2.waitKey(1)
-        # out.write(canvas)
+        out.write(canvas)
     parent_node = closed_list[tuple(final_state)]
     path_stack.append(final_state) #Appending the final state because of the loop starting condition
     while(parent_node!=initial_state):
@@ -483,10 +475,10 @@ def back_track(initial_state,final_state,closed_list,canvas):
         print(path_node)
         start_node = path_node.copy()
     #     canvas[path_node[1]][path_node[0]] = [19,209,158]
-    #     out.write(canvas)
+        out.write(canvas)
     
     # cv2.imshow("Nodes Exploration",canvas)
-    # out.release()
+    out.release()
 
 if __name__ == '__main__':
      #Gives the time at which the program has started
