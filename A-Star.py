@@ -1,7 +1,7 @@
 # A-Star.py
 """
 Authors: Kumara Ritvik Oruganti (okritvik@umd.edu), 2022
-        Adarsh Malapaka (amalapak@umd.edu), 2022
+         Adarsh Malapaka (amalapak@umd.edu), 2022
 Brief: Computes and visualizes an optimal path between the start and goal posiitons in a 5-connected (-60,-30, 0, 30, 60) degrees
        obstacle map for a point mobile robot with non-zero radius and clearance and a defined step size using A* Algorithm. 
 
@@ -11,12 +11,10 @@ Date: 21st March, 2022
 
 """
 # Importing the required libraries
-import copy
 import time
 import cv2
 import numpy as np
 import heapq as hq
-import matplotlib.pyplot as plt
 
 
 def take_robot_inputs():
@@ -125,18 +123,27 @@ def take_map_inputs(canvas):
         else:
             break
     while True:
-        initial_angle = input("Enter the Initial Head Angle (0 to 360 degrees (multiple of 30 degrees)): ")
-        if(int(initial_angle)<0 or int(initial_angle)>359 or (int(initial_angle)%30 != 0)):
+        initial_angle = input("Enter the Initial Head Angle (+- multiple of 30 deg): ")
+        
+        # if(int(initial_angle)<0 or int(initial_angle)>359 or (int(initial_angle)%30 != 0)):
+        if((int(initial_angle)%30 != 0)):
             print("Enter a valid Headway Angle!")
         else:
+            if int(initial_angle) < 0:
+                initial_angle = 360 + int(initial_angle)
             initial_state.append(int(initial_angle))
             break
+            
 
     while True:
-        final_angle = input("Enter the Final Head Angle (0 to 360 degrees (multiple of 30 degrees)): ")
-        if(int(final_angle)<0 or int(final_angle)>359 or (int(final_angle)%30 != 0)):
+        final_angle = input("Enter the Final Head Angle (+- multiple of 30 deg): ")
+        
+        # if(int(initial_angle)<0 or int(initial_angle)>359 or (int(initial_angle)%30 != 0)):
+        if((int(final_angle)%30 != 0)):
             print("Enter a valid Headway Angle!")
         else:
+            if int(final_angle) < 0:
+                final_angle = 360 + int(final_angle)
             final_state.append(int(final_angle))
             break
 
@@ -565,7 +572,7 @@ def astar(initial_state, final_state, canvas, step):
         # print("\nPopped node: ",node)
         closed_list[tuple(node[4])] = node[3]
         if(check_goal(node[4],final_state)):
-            print("Goal Reached")
+            print("\nGoal Reached!")
             back_track_flag = True
             back_track(initial_state,node[4],closed_list,canvas)
             break
@@ -693,7 +700,7 @@ def back_track(initial_state, final_state, closed_list, canvas):
     """
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')    # Creating video writer to generate a video.
-    out = cv2.VideoWriter('A-Star-amalapak-okritvik.avi',fourcc,400,(canvas.shape[1],canvas.shape[0]))
+    out = cv2.VideoWriter('A-Star-amalapak-okritvik_New.avi',fourcc,1000,(canvas.shape[1],canvas.shape[0]))
     
     print("Total Number of Nodes Explored = ",len(closed_list)) 
     
@@ -721,6 +728,7 @@ def back_track(initial_state, final_state, closed_list, canvas):
     path_stack.append(initial_state)    # Appending the initial state because of the loop breaking condition
     print("\nOptimal Path: ")
     start_node = path_stack.pop()
+    print(start_node)
 
     # Visualizing the optimal path
     while(len(path_stack) > 0):
@@ -728,11 +736,9 @@ def back_track(initial_state, final_state, closed_list, canvas):
         cv2.line(canvas,(int(start_node[0]),int(start_node[1])),(int(path_node[0]),int(path_node[1])),(255,0,196),5)
         print(path_node)
         start_node = path_node.copy()
-        # canvas[path_node[1]][path_node[0]] = [19,209,158]
         out.write(canvas)
 
     out.release()
-
 
 if __name__ == '__main__':
     
@@ -749,12 +755,16 @@ if __name__ == '__main__':
     # Changing the input Cartesian Coordinates of the Map to Image Coordinates:
     initial_state[1] = canvas.shape[0]-1 - initial_state[1]
     final_state[1] = canvas.shape[0]-1 - final_state[1]
+    # print(initial_state, final_state)
 
     # Converting the angles with respect to the image coordinates
     if initial_state[2] != 0:
-        initial_state[2] = 360 - final_state[2]
+        initial_state[2] = 360 - initial_state[2]
     if final_state[2] != 0:
         final_state[2] = 360 - final_state[2]
+
+    print("\nStart Node (image coords): ", initial_state)
+    print("Goal Node (image coords): ", final_state)
 
     start_time = time.time()
 
@@ -764,7 +774,7 @@ if __name__ == '__main__':
     astar(initial_state,final_state,canvas,step)    # Compute the optimal path using A* Algorithm
     
     end_time = time.time()    # Time taken for the algorithm to find the optimal path
-    print("Code Execution Time (sec): ",end_time-start_time)    # Computes & prints the total execution time
+    print("\nCode Execution Time (sec): ", end_time-start_time)    # Computes & prints the total execution time
 
     cv2.imshow("A* Exploration and Optimal Path Visualization", canvas)
     cv2.waitKey(0)
