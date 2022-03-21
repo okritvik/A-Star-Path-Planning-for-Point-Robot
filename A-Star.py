@@ -1,57 +1,85 @@
+# A-Star.py
 """
-@author Kumara Ritvik Oruganti
-@brief This code is written as part of the Project 2 of ENPM 661 to find a path for the point robot using Dijkstra Algorithm
-There will be 8 action sets, Up, Down, Left, Right and Four Diagonals.
-Cost for up, down, left, right actions is 1 and for diagonal actions, the cost is 1.4.
+Authors: Kumara Ritvik Oruganti (okritvik@umd.edu), 2022
+        Adarsh Malapaka (amalapak@umd.edu), 2022
+Brief: Computes and visualizes an optimal path between the start and goal posiitons in a 5-connected (-60,-30, 0, 30, 60) degrees
+       obstacle map for a point mobile robot with non-zero radius and clearance and a defined step size using A* Algorithm. 
 
-A geometrical obstacle map is given. For the given obstacle map, mathematical equations are developed and with 5mm clearance, the obstacle map is generated using the half planes.
-The path is found from a given start node to goal node and visualized using OpenCV.
+Course: ENPM662 - Planning for Autonomous Robotics [Project-03, Phase 01]
+        University of Maryland, College Park (MD)
+Date: 21st March, 2022
+
 """
-
-#Imports
+# Importing the required libraries
 import copy
-from turtle import width
-import numpy as np
-import cv2
-import heapq as hq
 import time
+import cv2
+import numpy as np
+import heapq as hq
 import matplotlib.pyplot as plt
 
+
 def take_robot_inputs():
+    """
+    Gets the robot radius and clearance inputs from the user.
+                
+    Parameters:
+        None
+
+    Returns:
+        clearance: int
+                Robot's clearance
+
+        robot_radius: int 
+                Robot's radius
+    """
     clearance = 0
     robot_radius = 0
 
     while True:
-        clearance = input("Enter the clearance: ")
+        clearance = input("Enter the robot's clearance: ")
         if(int(clearance)<0):
-            print("Enter Valid Clearance")
+            print("Enter a valid Robot Clearance!")
         else:
             break
 
     while True:
-        robot_radius = input("Enter the robot radius: ")
+        robot_radius = input("Enter the robot's radius: ")
         if(int(robot_radius)<0):
-            print("Enter Valid robot_radius")
+            print("Enter a valid Robot Radius!")
         else:
             break
     
     return int(clearance), int(robot_radius)
 
+
 def take_map_inputs(canvas):
     """
-    @brief: This function takes the initial node state and final node state to solve the puzzle.
-    :param canvas: canvas image  
-    Prompts the user to input again if the nodes are not positive and out of bounds
-    :return: Initial state and final state of the puzzle to be solved
+    Gets the initial node, final node coordinates, heading angles and step-size from the user.
+                
+    Parameters:
+        canvas: NumPy array
+                Map matrix
+
+    Returns:
+        initial_state: List
+                List to hold the initial node coordinates and heading angle
+
+        final_state: List 
+                List to hold the final node coordinates and heading angle
+        
+        step: int 
+                Robot's step size
     """
     initial_state = []
     final_state = []
     initial_angle = 0
     final_angle = 0
     step = 0
+
     while True:
         while True:
-            state = input("Enter the X Coordinate of Start Node: ")
+            state = input("Enter the X Coordinate of the Start Node: ")
             if(int(state)<0 or int(state)>canvas.shape[1]-1):
                 print("Enter a valid X Coordinate!")
                 continue
@@ -59,7 +87,7 @@ def take_map_inputs(canvas):
                 initial_state.append(int(state))
                 break
         while True:
-            state = input("Enter the Y Coordinate of Start Node: ")
+            state = input("Enter the Y Coordinate of the Start Node: ")
             if(int(state)<0 or int(state)>canvas.shape[0]-1):
                 print("Enter a valid Y Coordinate!")
                 continue
@@ -72,9 +100,10 @@ def take_map_inputs(canvas):
             initial_state.clear()
         else:
             break
+
     while True:
         while True:
-            state = input("Enter the X Coordinate of Goal Node: ")
+            state = input("Enter the X Coordinate of the Goal Node: ")
             if(int(state)<0 or int(state)>canvas.shape[1]-1):
                 print("Enter a valid X Coordinate!")
                 continue
@@ -82,7 +111,7 @@ def take_map_inputs(canvas):
                 final_state.append(int(state))
                 break
         while True:
-            state = input("Enter the Y Coordinate of Goal Node: ")
+            state = input("Enter the Y Coordinate of the Goal Node: ")
             if(int(state)<0 or int(state)>canvas.shape[0]-1):
                 print("Enter a valid Y Coordinate!")
                 continue
@@ -112,27 +141,30 @@ def take_map_inputs(canvas):
             break
 
     while True:
-        step = input("Enter the step size from 1 to 10: ")
+        step = input("Enter the step size between 1 to 10: ")
         if(int(step)<1 and int(step)>10):
-            print("Enter Valid step size")
+            print("Enter a valid step size!")
         else:
             break
     
     return initial_state,final_state,int(step)
 
 
-def draw_obstacles(canvas,offset=15):
+def draw_obstacles(canvas, offset=15):
     """
-    @brief: This function goes through each node in the canvas image and checks for the
-    obstacle space using the half plane equations. 
-    If the node is in obstacle space, the color is changed to blue.
-    :param canvas: Canvas Image
+    Draws the obstacles and walls in the map incorporating the robot's offset.
+                
+    Parameters:
+        canvas: NumPy array
+                Map matrix
+
+        offset: int
+                Offset is robot radius + clearance 
+
+    Returns:
+        canvas: NumPy array
+                Map matrix with drawn obstacles
     """
-    # Uncomment to use the cv2 functions to create the obstacle space
-    # cv2.circle(canvas, (300,65),45,(255,0,0),-1)
-    # cv2.fillPoly(canvas, pts = [np.array([[115,40],[36,65],[105,150],[80,70]])], color=(255,0,0)) #Arrow
-    # cv2.fillPoly(canvas, pts = [np.array([[200,110],[235,130],[235,170],[200,190],[165,170],[165,130]])], color=(255,0,0)) #Hexagon
-    
     height, width, __ = canvas.shape
 
     for i in range(width):
@@ -152,150 +184,338 @@ def draw_obstacles(canvas,offset=15):
 
             # Drawing actual obstacles without robot clearance and radius
             if ((i-300)**2+(j-65)**2-((40)**2))<=0:
-                canvas[j][i] = [255,255,255]
+                canvas[j][i] = [255,255,0]
             
             if (j+(0.57*i)-(224.285))>=0 and (j-(0.57*i)+(4.285))>=0 and (i-(235))<=0 and (j+(0.57*i)-(304.285))<=0 and (j-(0.57*i)-(75.714))<=0 and (i-(165))>=0:
-                canvas[j][i] = [255,255,255]
+                canvas[j][i] = [255,255,0]
 
             if ((j+(0.316*i)-(76.392)>=0) and (j+(0.857*i)-(138.571)<=0) and (j-(0.114*i)-60.909)<=0) or ((j-(3.2*i)+(186)>=0) and (j-(1.232*i)-(20.652))<=0 and (j-(0.114*i)-60.909)>=0):
                 canvas[j][i] = [255,255,0]
 
     return canvas
 
-#Change the data structure to add total cost and cost to goal.
-#Generate action Sets as given in PPT
+
 def threshold(num):
+    """
+    Rounds the given number to the nearest 0.5 value.
+    For ex: 4.61 is rounded to 4.5 whereas 4.8 is rounded to 5.0.
+                
+    Parameters:
+        num: float
+                Number to be rounded
+
+    Returns:
+        num: float
+                Number rounded to nearest 0.5
+    """
     return round(num*2)/2
 
-def check_goal(node,final):
+
+def check_goal(node, final):
+    """
+    Checks if the given current node is within the goal node's threshold distance of 1.5.
+                
+    Parameters:
+        node: List
+                Current node
+
+        final: List
+                Goal node 
+
+    Returns:
+        flag: bool
+                True if the present node is the goal node, False otherwise
+    """
     if(np.sqrt(np.power(node[0]-final[0],2)+np.power(node[1]-final[1],2))<1.5) and (node[2]==final[2]):
         return True
     else:
         return False
 
-def cost_to_goal(node,final):
+
+def cost_to_goal(node, final):
+    """
+    Computes the Cost To Goal between present and goal nodes using a Euclidean distance heuristic.
+                
+    Parameters:
+        node: List
+                Current node
+
+        final: List
+                Goal node 
+
+    Returns:
+        flag: bool
+                True if the present node is the goal node, False otherwise
+    """
     return np.sqrt(np.power(node[0]-final[0],2)+np.power(node[1]-final[1],2))
 
-def check_obstacle(next_width,next_height,canvas):    
+
+def check_obstacle(next_width, next_height, canvas):    
+    """
+    Checks if the generated/next node is in the obstacle region.
+              
+    Parameters:
+        next_width: float
+                Width of the next node from the present node
+
+        next_height: float
+                Height of the next node from the present node
+        
+        canvas: NumPy array
+                Map matrix with drawn obstacles 
+
+    Returns:
+        flag: bool
+                True if the next node is NOT in the obstacle region, False otherwise
+    """
     if canvas[int(round(next_height))][int(round(next_width))][0]==255:
-        # print("In obstacle")
         return False
     else:
         return True
 
-def action_zero(node,canvas,visited,step): # Local angles
+
+def action_zero(node, canvas, visited, step):    # Local angles
+    """
+    Moves the robot at 0 degree angle (wrt robot's frame) by the step amount. 
+              
+    Parameters:
+        node: List
+                List of node's x, y and theta parameters
+        
+        canvas: NumPy array
+                Map matrix with drawn obstacles 
+
+        visited: NumPy array
+                Visited matrix of size 500x800x12 to keep track of duplicate nodes  
+
+        step: int
+               Step size of the robot 
+
+    Returns:
+        Next Node flag: bool
+                True if the child node can be generated, False otherwise
+
+        next_node: List
+                Child node generated after performing the action
+
+        Duplicate Node flag: bool
+                True if generated next node is already visited, False otherwise
+    """
     next_node = node.copy()
-    
-    next_angle = next_node[2] + 0
+    next_angle = next_node[2] + 0    # Angle in Cartesian System
+
     if next_angle < 0:
         next_angle += 360 
     next_angle %= 360
     next_width = threshold(next_node[0] + step*np.cos(np.deg2rad(next_angle)))
     next_height = threshold(next_node[1] + step*np.sin(np.deg2rad(next_angle)))
-    # print("Next Angle ",next_angle)
-    # print("Width, Height: ",next_width,next_height)
 
     if (round(next_height)>0 and round(next_height)<canvas.shape[0]) and (round(next_width)>0 and round(next_width)<canvas.shape[1]) and (check_obstacle(next_width,next_height,canvas)) :
         next_node[0] = next_width
         next_node[1] = next_height
         next_node[2] = next_angle
+
         if(visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] == 1):
-            return True, next_node,True
+            return True, next_node, True
         else:
             visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
-            return True, next_node,False
+            return True, next_node, False
     else:
-        return False, next_node,False
+        return False, next_node, False
     
 
-def action_minus_thirty(node,canvas,visited,step): # Local angles
+def action_minus_thirty(node, canvas, visited, step):    # Local angles
+    """
+    Moves the robot at -30 degree angle (wrt robot's frame) by the step amount. 
+              
+    Parameters:
+        node: List
+                List of node's x, y and theta parameters
+        
+        canvas: NumPy array
+                Map matrix with drawn obstacles 
+
+        visited: NumPy array
+                Visited matrix of size 500x800x12 to keep track of duplicate nodes  
+
+        step: int
+               Step size of the robot 
+
+    Returns:
+        Next Node flag: bool
+                True if the child node can be generated, False otherwise
+
+        next_node: List
+                Child node generated after performing the action
+
+        Duplicate Node flag: bool
+                True if generated next node is already visited, False otherwise
+    """
     next_node = node.copy()
+    next_angle = next_node[2] + 30    # Angle in Cartesian System
     
-    next_angle = next_node[2] + 30 # Cartesian System
     if next_angle < 0:
         next_angle += 360 
     next_angle %= 360
     next_width = threshold(next_node[0] + step*np.cos(np.deg2rad(next_angle)))
     next_height = threshold(next_node[1] + step*np.sin(np.deg2rad(next_angle)))
-    # print("Next Angle ",next_angle)
-    # print("Width, Height: ",next_width,next_height)
 
     if (round(next_height)>0 and round(next_height)<canvas.shape[0]) and (round(next_width)>0 and round(next_width)<canvas.shape[1]) and (check_obstacle(next_width,next_height,canvas)) :
         next_node[0] = next_width
         next_node[1] = next_height
         next_node[2] = next_angle
+        
         if(visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] == 1):
-            return True, next_node,True
+            return True, next_node, True
         else:
             visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
-            return True, next_node,False
+            return True, next_node, False
     else:
-        return False, next_node,False
+        return False, next_node, False
 
 
-def action_minus_sixty(node,canvas,visited,step): # Local angles
+def action_minus_sixty(node, canvas, visited, step):    # Local angles
+    """
+    Moves the robot at -60 degree angle (wrt robot's frame) by the step amount. 
+              
+    Parameters:
+        node: List
+                List of node's x, y and theta parameters
+        
+        canvas: NumPy array
+                Map matrix with drawn obstacles 
+
+        visited: NumPy array
+                Visited matrix of size 500x800x12 to keep track of duplicate nodes  
+
+        step: int
+               Step size of the robot 
+
+    Returns:
+        Next Node flag: bool
+                True if the child node can be generated, False otherwise
+
+        next_node: List
+                Child node generated after performing the action
+
+        Duplicate Node flag: bool
+                True if generated next node is already visited, False otherwise
+    """
     next_node = node.copy()
+    next_angle = next_node[2] + 60    # Angle in Cartesian System
     
-    next_angle = next_node[2] + 60 #cartesian System
     if next_angle < 0:
         next_angle += 360
     
     next_angle %= 360 
     next_width = threshold(next_node[0] + step*np.cos(np.deg2rad(next_angle)))
     next_height = threshold(next_node[1] + step*np.sin(np.deg2rad(next_angle)))
-    # print("Next Angle ",next_angle)
-    # print("Width, Height: ",next_width,next_height)
 
     if (round(next_height)>0 and round(next_height)<canvas.shape[0]) and (round(next_width)>0 and round(next_width)<canvas.shape[1]) and (check_obstacle(next_width,next_height,canvas)) :
         next_node[0] = next_width
         next_node[1] = next_height
         next_node[2] = next_angle
+
         if(visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] == 1):
             return True, next_node,True
         else:
             visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
-            return True, next_node,False
+            return True, next_node, False
     else:
-        return False, next_node,False
+        return False, next_node, False
 
-def action_plus_thirty(node,canvas,visited,step): # Local angles
+
+def action_plus_thirty(node, canvas, visited, step):    # Local angles
+    """
+    Moves the robot at +30 degree angle (wrt robot's frame) by the step amount. 
+              
+    Parameters:
+        node: List
+                List of node's x, y and theta parameters
+        
+        canvas: NumPy array
+                Map matrix with drawn obstacles 
+
+        visited: NumPy array
+                Visited matrix of size 500x800x12 to keep track of duplicate nodes  
+
+        step: int
+               Step size of the robot 
+
+    Returns:
+        Next Node flag: bool
+                True if the child node can be generated, False otherwise
+
+        next_node: List
+                Child node generated after performing the action
+
+        Duplicate Node flag: bool
+                True if generated next node is already visited, False otherwise
+    """
     next_node = node.copy()
-    next_angle = next_node[2] - 30 #cartesian system
+    next_angle = next_node[2] - 30    # Angle in Cartesian System
+
     if next_angle < 0:
         next_angle += 360 
     next_angle %= 360
     next_width = threshold(next_node[0] + step*np.cos(np.deg2rad(next_angle)))
     next_height = threshold(next_node[1] + step*np.sin(np.deg2rad(next_angle)))
-    # print("Next Angle ",next_angle)
-    # print("Width, Height: ",next_width,next_height)
 
     if (round(next_height)>0 and round(next_height)<canvas.shape[0]) and (round(next_width)>0 and round(next_width)<canvas.shape[1]) and (check_obstacle(next_width,next_height,canvas)) :
         next_node[0] = next_width
         next_node[1] = next_height
         next_node[2] = next_angle
+
         if(visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] == 1):
-            return True, next_node,True
+            return True, next_node, True
         else:
             visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] = 1
-            return True, next_node,False
+            return True, next_node, False
     else:
-        return False, next_node,False
+        return False, next_node, False
 
-def action_plus_sixty(node,canvas,visited,step): # Local angles
+
+def action_plus_sixty(node, canvas, visited, step):    # Local angles
+    """
+    Moves the robot at +60 degree angle (wrt robot's frame) by the step amount. 
+              
+    Parameters:
+        node: List
+                List of node's x, y and theta parameters
+        
+        canvas: NumPy array
+                Map matrix with drawn obstacles 
+
+        visited: NumPy array
+                Visited matrix of size 500x800x12 to keep track of duplicate nodes  
+
+        step: int
+               Step size of the robot 
+
+    Returns:
+        Next Node flag: bool
+                True if the child node can be generated, False otherwise
+
+        next_node: List
+                Child node generated after performing the action
+
+        Duplicate Node flag: bool
+                True if generated next node is already visited, False otherwise
+    """
     next_node = node.copy()
-    next_angle = next_node[2] - 60 #cartesian System
+    next_angle = next_node[2] - 60    # Angle in Cartesian System
+
     if next_angle < 0:
         next_angle += 360
     next_angle %= 360
     next_width = threshold(next_node[0] + step*np.cos(np.deg2rad(next_angle)))
     next_height = threshold(next_node[1] + step*np.sin(np.deg2rad(next_angle)))
-    # print("Next Angle ",next_angle)
-    # print("Width, Height: ",next_width,next_height)
 
     if (round(next_height)>0 and round(next_height)<canvas.shape[0]) and (round(next_width)>0 and round(next_width)<canvas.shape[1]) and (check_obstacle(next_width,next_height,canvas)) :
         next_node[0] = next_width
         next_node[1] = next_height
         next_node[2] = next_angle
+
         if(visited[int(next_height*2)][int(next_width*2)][int(next_angle/30)] == 1):
             return True, next_node,True
         else:
@@ -304,26 +524,42 @@ def action_plus_sixty(node,canvas,visited,step): # Local angles
     else:
         return False, next_node,False
 
-def astar(initial_state,final_state,canvas,step):
-    """
-    @brief: This function implements the A* algorithm to find the path between given
-    start node and goal node 
-    :param initial_state: Start Node
-    :param final_state: Final Node
 
-    Open List is a heap queue which has the cost as the key to sort the heap
-    Closed list is a dictionary which has key as the current node and value as the parent node
-    This function is robust enough to give the no solution prompt for goal/start states in the obstacle space
+def astar(initial_state, final_state, canvas, step):
     """
-    open_list = []
-    closed_list = {}
+    Implements the A* algorithm to find the path between the user-given start node and goal node.  
+    It is robust enough to raise a 'no solution' prompt for goal/start states in the obstacle space.
+    The open list is a heap queue which uses the Total Cost as the key to sort the heap.
+    The closed list is a dictionary with key as the current node and value as the parent node.
+    
+    Parameters:
+        initial_state: List
+                List of start node's x, y and theta parameters
+        
+        final_state: List
+                List of goal node's x, y and theta parameters 
+
+        canvas: NumPy array
+                Map matrix with drawn obstacles  
+
+        step: int
+               Step size of the robot 
+
+    Returns:
+            None
+    """
+    open_list = []    # Format: {(TotalCost): CostToCome, CostToGo, PresentNode, ParentNode}
+    closed_list = {}    # Format: {(PresentNode): ParentNode}
     back_track_flag = False
-    visited_nodes =np.zeros((500,800,12))
+    
+    visited_nodes = np.zeros((500,800,12))
+    
     hq.heapify(open_list)
     present_c2c = 0
     present_c2g = cost_to_goal(initial_state,final_state)
-    total_cost = present_c2c+present_c2g
+    total_cost = present_c2c + present_c2g
     hq.heappush(open_list,[total_cost,present_c2c,present_c2g,initial_state,initial_state])
+    
     while len(open_list)!=0:
         node = hq.heappop(open_list)
         # print("\nPopped node: ",node)
@@ -333,196 +569,203 @@ def astar(initial_state,final_state,canvas,step):
             back_track_flag = True
             back_track(initial_state,node[4],closed_list,canvas)
             break
-        # print(closed_list)
-        # print(len(open_list))
+
         present_c2c = node[1]
         present_c2g = node[2]
         total_cost = node[0]
-        flag,n_state,dup = action_plus_sixty(node[4],canvas,visited_nodes,step)
+
+        # Move +60 degrees
+        flag, n_state, dup = action_plus_sixty(node[4],canvas,visited_nodes,step)    # flag is True if valid move
         if(flag):
             if tuple(n_state) not in closed_list:
                 if(dup):
                     for i in range(len(open_list)):
                         if tuple(open_list[i][4]) == tuple(n_state):
-                            # print("Duplicate Found")
                             cost = present_c2c+step+cost_to_goal(n_state,final_state)
-                            if(cost<open_list[i][0]):
+                            if(cost<open_list[i][0]):    # Updating the cost and parent info of the node
                                 open_list[i][1] = present_c2c+step
                                 open_list[i][0] = cost
                                 open_list[i][3] = node[4]
                                 hq.heapify(open_list)
                             break
                 else:
-                    # print("No duplicate")
                     hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
                     hq.heapify(open_list)
 
-        flag,n_state,dup = action_plus_thirty(node[4],canvas,visited_nodes,step)
+        # Move +30 degrees
+        flag, n_state, dup = action_plus_thirty(node[4],canvas,visited_nodes,step)    # flag is True if valid move
         if(flag):
             if tuple(n_state) not in closed_list:
                 if(dup):
                     for i in range(len(open_list)):
                         if tuple(open_list[i][4]) == tuple(n_state):
-                            # print("Duplicate Found")
                             cost = present_c2c+step+cost_to_goal(n_state,final_state)
-                            if(cost<open_list[i][0]):
+                            if(cost<open_list[i][0]):    # Updating the cost and parent info of the node
                                 open_list[i][1] = present_c2c+step
                                 open_list[i][0] = cost
                                 open_list[i][3] = node[4]
                                 hq.heapify(open_list)
                             break
                 else:
-                    # print("No duplicate")
                     hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
                     hq.heapify(open_list)
                 
-        flag,n_state,dup = action_zero(node[4],canvas,visited_nodes,step)
+        # Move 0 degrees
+        flag, n_state, dup = action_zero(node[4],canvas,visited_nodes,step)    # flag is True if valid move
         if(flag):
             if tuple(n_state) not in closed_list:
                 if(dup):
                     for i in range(len(open_list)):
                         if tuple(open_list[i][4]) == tuple(n_state):
-                            # print("Duplicate Found")
                             cost = present_c2c+step+cost_to_goal(n_state,final_state)
-                            if(cost<open_list[i][0]):
+                            if(cost<open_list[i][0]):    # Updating the cost and parent info of the node
                                 open_list[i][1] = present_c2c+step
                                 open_list[i][0] = cost
                                 open_list[i][3] = node[4]
                                 hq.heapify(open_list)
                             break
                 else:
-                    # print("No duplicate")
                     hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
                     hq.heapify(open_list)
 
-        flag,n_state,dup = action_minus_thirty(node[4],canvas,visited_nodes,step)
+        # Move -30 degrees
+        flag, n_state, dup = action_minus_thirty(node[4],canvas,visited_nodes,step)    # flag is True if valid move
         if(flag):
             if tuple(n_state) not in closed_list:
                 if(dup):
                     for i in range(len(open_list)):
                         if tuple(open_list[i][4]) == tuple(n_state):
-                            # print("Duplicate Found")
                             cost = present_c2c+step+cost_to_goal(n_state,final_state)
-                            if(cost<open_list[i][0]):
+                            if(cost<open_list[i][0]):    # Updating the cost and parent info of the node
                                 open_list[i][1] = present_c2c+step
                                 open_list[i][0] = cost
                                 open_list[i][3] = node[4]
                                 hq.heapify(open_list)
                             break
                 else:
-                    # print("No duplicate")
                     hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
                     hq.heapify(open_list)
 
-        flag,n_state,dup = action_minus_sixty(node[4],canvas,visited_nodes,step)
+        # Move -60 degrees
+        flag,n_state,dup = action_minus_sixty(node[4],canvas,visited_nodes,step)    # flag is True if valid move
         if(flag):
             if tuple(n_state) not in closed_list:
                 if(dup):
                     for i in range(len(open_list)):
                         if tuple(open_list[i][4]) == tuple(n_state):
-                            # print("Duplicate Found")
                             cost = present_c2c+step+cost_to_goal(n_state,final_state)
-                            if(cost<open_list[i][0]):
+                            if(cost<open_list[i][0]):    # Updating the cost and parent info of the node
                                 open_list[i][1] = present_c2c+step
                                 open_list[i][0] = cost
                                 open_list[i][3] = node[4]
                                 hq.heapify(open_list)
                             break
                 else:
-                    # print("No duplicate")
                     hq.heappush(open_list,[present_c2c+step+cost_to_goal(n_state,final_state),present_c2c+step,cost_to_goal(n_state,final_state),node[4],n_state])
                     hq.heapify(open_list)
+
     if not back_track_flag:    
-        print("No Solution Found")
-        print("Total Number of nodes Explored = ",len(closed_list))    
+        print("\nNo Solution Found!")
+        print("Total Number of Nodes Explored: ",len(closed_list))
 
-def back_track(initial_state,final_state,closed_list,canvas):
+
+def back_track(initial_state, final_state, closed_list, canvas):
     """
-    @brief: This function backtracks the start node after reaching the goal node.
+    Implements backtracking to the start node after reaching the goal node.
     This function is also used for visualization of explored nodes and computed path using OpenCV.
     A stack is used to store the intermediate nodes while transversing from the goal node to start node.
+    
+    Parameters:
+        initial_state: List
+                List of start node's x, y and theta parameters
+        
+        final_state: List
+                List of goal node's x, y and theta parameters 
 
-    :param initial_state: Start Node
-    :param final_state: Goal Node
-    :param closed_list: Dictionary that contains nodes and its parents
-    :param canvas: Canvas Image 
+        closed_list: Dictionary
+                Dictionary containing explored nodes and corresponding parents  
+
+        canvas: NumPy array
+                Map matrix with drawn obstacles 
+
+    Returns:
+            None
     """
-    #Creating video writer to generate a video.
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')    # Creating video writer to generate a video.
     out = cv2.VideoWriter('A-Star-amalapak-okritvik.avi',fourcc,400,(canvas.shape[1],canvas.shape[0]))
-    print("Total Number of nodes Explored = ",len(closed_list)) 
-    keys = closed_list.keys() #Returns all the nodes that are explored
-    path_stack = [] #Stack to store the path from start to goal
+    
+    print("Total Number of Nodes Explored = ",len(closed_list)) 
+    
+    keys = closed_list.keys()    # Returns all the nodes that are explored
+    path_stack = []    # Stack to store the path from start to goal
+    
+    # Visualizing the explored nodes
     keys = list(keys)
     for key in keys:
         p_node = closed_list[tuple(key)]
         cv2.circle(canvas,(int(key[0]),int(key[1])),2,(0,0,255),-1)
         cv2.circle(canvas,(int(p_node[0]),int(p_node[1])),2,(0,0,255),-1)
-        # print((int(key[0]),int(key[1])))
-        # print(int(closed_list[tuple(key)][0]))
         canvas = cv2.arrowedLine(canvas, (int(p_node[0]),int(p_node[1])), (int(key[0]),int(key[1])), (0,255,0), 1, tipLength = 0.2)
-        cv2.imshow("viz",canvas)
+        cv2.imshow("A* Exploration and Optimal Path Visualization",canvas)
         cv2.waitKey(1)
-    
-        # cv2.waitKey(1)
         out.write(canvas)
+
     parent_node = closed_list[tuple(final_state)]
-    path_stack.append(final_state) #Appending the final state because of the loop starting condition
-    while(parent_node!=initial_state):
-        # print("Parent Node",parent_node)
-        # canvas[parent_node[1]][parent_node[0]] = [19,209,158]
+    path_stack.append(final_state)    # Appending the final state because of the loop starting condition
+    
+    while(parent_node != initial_state):
         path_stack.append(parent_node)
         parent_node = closed_list[tuple(parent_node)]
     
-    path_stack.append(initial_state) #Appending the initial state because of the loop breaking condition
-    print("Optimal Path: ")
+    path_stack.append(initial_state)    # Appending the initial state because of the loop breaking condition
+    print("\nOptimal Path: ")
     start_node = path_stack.pop()
-    while(len(path_stack)>0):
+
+    # Visualizing the optimal path
+    while(len(path_stack) > 0):
         path_node = path_stack.pop()
         cv2.line(canvas,(int(start_node[0]),int(start_node[1])),(int(path_node[0]),int(path_node[1])),(255,0,196),5)
         print(path_node)
         start_node = path_node.copy()
-    #     canvas[path_node[1]][path_node[0]] = [19,209,158]
+        # canvas[path_node[1]][path_node[0]] = [19,209,158]
         out.write(canvas)
-    
-    # cv2.imshow("Nodes Exploration",canvas)
+
     out.release()
+
 
 if __name__ == '__main__':
     
-    canvas = np.ones((250,400,3),dtype="uint8") #Creating a blank canvas
-    canvas = draw_obstacles(canvas) #Draw the obstacles in the canvas, default point robot with 5 units of clearance
-
-    #Uncomment the below lines to see the obstacle space. Press Any Key to close the image window
-    # cv2.imshow("Canvas",canvas)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-
+    canvas = np.ones((250,400,3), dtype="uint8")    # Creating a blank canvas/map
     clearance, robot_radius = take_robot_inputs()
     canvas = draw_obstacles(canvas,offset = (clearance + robot_radius))
     initial_state, final_state, step = take_map_inputs(canvas) #Take the start and goal node from the user
     
-    #Changing the cartesian coordinates to image coordinates:
+    # Uncomment the below 3 lines to view the obstacle space. Press Any Key to close the image window
+    # cv2.imshow("Canvas",canvas)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    # Changing the input Cartesian Coordinates of the Map to Image Coordinates:
     initial_state[1] = canvas.shape[0]-1 - initial_state[1]
     final_state[1] = canvas.shape[0]-1 - final_state[1]
-    
-    #Converting the angles with respect to the image coordinates
-    if initial_state[2]!=0:
+
+    # Converting the angles with respect to the image coordinates
+    if initial_state[2] != 0:
         initial_state[2] = 360 - final_state[2]
-    if final_state[2]!=0:
+    if final_state[2] != 0:
         final_state[2] = 360 - final_state[2]
-    print(initial_state,final_state)
-    #Write a condition to check if the initial state and final state are in the obstacle space and exit from program and ask to rerun with valid start and goal positions
-    # if(canvas[initial_state[1]][initial_state[0]][0]==255 or canvas[final_state[1]][final_state[0]][0]==255):
-    #     print("Given Start or Goal Node is in the Obstacle Region. Please re-run with Valid Coordinates")
-    #     exit()
+
     start_time = time.time()
+
     cv2.circle(canvas,(int(initial_state[0]),int(initial_state[1])),2,(0,0,255),-1)
     cv2.circle(canvas,(int(final_state[0]),int(final_state[1])),2,(0,0,255),-1)
-    astar(initial_state,final_state,canvas,step) #Compute the path using A Star Algorithm
     
-    end_time = time.time() #Time taken to run the whole algorithm to find the optimal path
-    cv2.imshow("viz",canvas)
+    astar(initial_state,final_state,canvas,step)    # Compute the optimal path using A* Algorithm
+    
+    end_time = time.time()    # Time taken for the algorithm to find the optimal path
+    print("Code Execution Time (sec): ",end_time-start_time)    # Computes & prints the total execution time
+
+    cv2.imshow("A* Exploration and Optimal Path Visualization", canvas)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    print("Code Execution Time: ",end_time-start_time) #Prints the total execution time
