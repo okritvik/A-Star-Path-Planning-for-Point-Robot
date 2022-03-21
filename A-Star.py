@@ -4,11 +4,9 @@ Authors: Kumara Ritvik Oruganti (okritvik@umd.edu), 2022
          Adarsh Malapaka (amalapak@umd.edu), 2022
 Brief: Computes and visualizes an optimal path between the start and goal posiitons in a 5-connected (-60,-30, 0, 30, 60) degrees
        obstacle map for a point mobile robot with non-zero radius and clearance and a defined step size using A* Algorithm. 
-
 Course: ENPM662 - Planning for Autonomous Robotics [Project-03, Phase 01]
         University of Maryland, College Park (MD)
 Date: 21st March, 2022
-
 """
 # Importing the required libraries
 import time
@@ -23,11 +21,9 @@ def take_robot_inputs():
                 
     Parameters:
         None
-
     Returns:
         clearance: int
                 Robot's clearance
-
         robot_radius: int 
                 Robot's radius
     """
@@ -58,11 +54,9 @@ def take_map_inputs(canvas):
     Parameters:
         canvas: NumPy array
                 Map matrix
-
     Returns:
         initial_state: List
                 List to hold the initial node coordinates and heading angle
-
         final_state: List 
                 List to hold the final node coordinates and heading angle
         
@@ -164,10 +158,8 @@ def draw_obstacles(canvas, offset=15):
     Parameters:
         canvas: NumPy array
                 Map matrix
-
         offset: int
                 Offset is robot radius + clearance 
-
     Returns:
         canvas: NumPy array
                 Map matrix with drawn obstacles
@@ -210,7 +202,6 @@ def threshold(num):
     Parameters:
         num: float
                 Number to be rounded
-
     Returns:
         num: float
                 Number rounded to nearest 0.5
@@ -225,10 +216,8 @@ def check_goal(node, final):
     Parameters:
         node: List
                 Current node
-
         final: List
                 Goal node 
-
     Returns:
         flag: bool
                 True if the present node is the goal node, False otherwise
@@ -246,10 +235,8 @@ def cost_to_goal(node, final):
     Parameters:
         node: List
                 Current node
-
         final: List
                 Goal node 
-
     Returns:
         flag: bool
                 True if the present node is the goal node, False otherwise
@@ -264,13 +251,11 @@ def check_obstacle(next_width, next_height, canvas):
     Parameters:
         next_width: float
                 Width of the next node from the present node
-
         next_height: float
                 Height of the next node from the present node
         
         canvas: NumPy array
                 Map matrix with drawn obstacles 
-
     Returns:
         flag: bool
                 True if the next node is NOT in the obstacle region, False otherwise
@@ -291,20 +276,15 @@ def action_zero(node, canvas, visited, step):    # Local angles
         
         canvas: NumPy array
                 Map matrix with drawn obstacles 
-
         visited: NumPy array
                 Visited matrix of size 500x800x12 to keep track of duplicate nodes  
-
         step: int
                Step size of the robot 
-
     Returns:
         Next Node flag: bool
                 True if the child node can be generated, False otherwise
-
         next_node: List
                 Child node generated after performing the action
-
         Duplicate Node flag: bool
                 True if generated next node is already visited, False otherwise
     """
@@ -341,20 +321,15 @@ def action_minus_thirty(node, canvas, visited, step):    # Local angles
         
         canvas: NumPy array
                 Map matrix with drawn obstacles 
-
         visited: NumPy array
                 Visited matrix of size 500x800x12 to keep track of duplicate nodes  
-
         step: int
                Step size of the robot 
-
     Returns:
         Next Node flag: bool
                 True if the child node can be generated, False otherwise
-
         next_node: List
                 Child node generated after performing the action
-
         Duplicate Node flag: bool
                 True if generated next node is already visited, False otherwise
     """
@@ -391,20 +366,15 @@ def action_minus_sixty(node, canvas, visited, step):    # Local angles
         
         canvas: NumPy array
                 Map matrix with drawn obstacles 
-
         visited: NumPy array
                 Visited matrix of size 500x800x12 to keep track of duplicate nodes  
-
         step: int
                Step size of the robot 
-
     Returns:
         Next Node flag: bool
                 True if the child node can be generated, False otherwise
-
         next_node: List
                 Child node generated after performing the action
-
         Duplicate Node flag: bool
                 True if generated next node is already visited, False otherwise
     """
@@ -442,20 +412,15 @@ def action_plus_thirty(node, canvas, visited, step):    # Local angles
         
         canvas: NumPy array
                 Map matrix with drawn obstacles 
-
         visited: NumPy array
                 Visited matrix of size 500x800x12 to keep track of duplicate nodes  
-
         step: int
                Step size of the robot 
-
     Returns:
         Next Node flag: bool
                 True if the child node can be generated, False otherwise
-
         next_node: List
                 Child node generated after performing the action
-
         Duplicate Node flag: bool
                 True if generated next node is already visited, False otherwise
     """
@@ -492,20 +457,15 @@ def action_plus_sixty(node, canvas, visited, step):    # Local angles
         
         canvas: NumPy array
                 Map matrix with drawn obstacles 
-
         visited: NumPy array
                 Visited matrix of size 500x800x12 to keep track of duplicate nodes  
-
         step: int
                Step size of the robot 
-
     Returns:
         Next Node flag: bool
                 True if the child node can be generated, False otherwise
-
         next_node: List
                 Child node generated after performing the action
-
         Duplicate Node flag: bool
                 True if generated next node is already visited, False otherwise
     """
@@ -545,13 +505,10 @@ def astar(initial_state, final_state, canvas, step):
         
         final_state: List
                 List of goal node's x, y and theta parameters 
-
         canvas: NumPy array
                 Map matrix with drawn obstacles  
-
         step: int
                Step size of the robot 
-
     Returns:
             None
     """
@@ -688,19 +645,16 @@ def back_track(initial_state, final_state, closed_list, canvas):
         
         final_state: List
                 List of goal node's x, y and theta parameters 
-
         closed_list: Dictionary
                 Dictionary containing explored nodes and corresponding parents  
-
         canvas: NumPy array
                 Map matrix with drawn obstacles 
-
     Returns:
             None
     """
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')    # Creating video writer to generate a video.
-    out = cv2.VideoWriter('A-Star-amalapak-okritvik_New.avi',fourcc,1000,(canvas.shape[1],canvas.shape[0]))
+    out = cv2.VideoWriter('A-Star-amalapak-okritvik_testCase01.avi',fourcc,500,(canvas.shape[1],canvas.shape[0]))
     
     print("Total Number of Nodes Explored = ",len(closed_list)) 
     
@@ -737,7 +691,7 @@ def back_track(initial_state, final_state, closed_list, canvas):
         print(path_node)
         start_node = path_node.copy()
         out.write(canvas)
-
+    
     out.release()
 
 if __name__ == '__main__':
@@ -779,3 +733,4 @@ if __name__ == '__main__':
     cv2.imshow("A* Exploration and Optimal Path Visualization", canvas)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+         
