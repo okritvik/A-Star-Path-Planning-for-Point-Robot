@@ -17,7 +17,27 @@ import heapq as hq
 import time
 import matplotlib.pyplot as plt
 
-def take_inputs(canvas):
+def take_robot_inputs():
+    clearance = 0
+    robot_radius = 0
+
+    while True:
+        clearance = input("Enter the clearance: ")
+        if(int(clearance)<0):
+            print("Enter Valid Clearance")
+        else:
+            break
+
+    while True:
+        robot_radius = input("Enter the robot radius: ")
+        if(int(robot_radius)<0):
+            print("Enter Valid robot_radius")
+        else:
+            break
+    
+    return int(clearance), int(robot_radius)
+
+def take_map_inputs(canvas):
     """
     @brief: This function takes the initial node state and final node state to solve the puzzle.
     :param canvas: canvas image  
@@ -28,14 +48,12 @@ def take_inputs(canvas):
     final_state = []
     initial_angle = 0
     final_angle = 0
-    clearance = 0
-    robot_radius = 0
     step = 0
     while True:
         while True:
             state = input("Enter the X Coordinate of Start Node: ")
             if(int(state)<0 or int(state)>canvas.shape[1]-1):
-                print("Enter Valid X Coordinate")
+                print("Enter a valid X Coordinate!")
                 continue
             else:
                 initial_state.append(int(state))
@@ -43,23 +61,22 @@ def take_inputs(canvas):
         while True:
             state = input("Enter the Y Coordinate of Start Node: ")
             if(int(state)<0 or int(state)>canvas.shape[0]-1):
-                print("Enter Valid Y Coordinate")
+                print("Enter a valid Y Coordinate!")
                 continue
             else:
                 initial_state.append(int(state))
                 break
-        break
-        # print(canvas[canvas.shape[0]-1 - initial_state[1]][initial_state[0]])
-        # if(canvas[canvas.shape[0]-1 - initial_state[1]][initial_state[0]][0]==255):
-        #     print("The entered start node is in the obstacle space")
-        #     initial_state.clear()
-        # else:
-        #     break
+        
+        if(canvas[canvas.shape[0]-1 - initial_state[1]][initial_state[0]][0]==255):
+            print("*** The entered start node is in the Obstacle Space! ***")
+            initial_state.clear()
+        else:
+            break
     while True:
         while True:
             state = input("Enter the X Coordinate of Goal Node: ")
             if(int(state)<0 or int(state)>canvas.shape[1]-1):
-                print("Enter Valid X Coordinate")
+                print("Enter a valid X Coordinate!")
                 continue
             else:
                 final_state.append(int(state))
@@ -67,53 +84,44 @@ def take_inputs(canvas):
         while True:
             state = input("Enter the Y Coordinate of Goal Node: ")
             if(int(state)<0 or int(state)>canvas.shape[0]-1):
-                print("Enter Valid Y Coordinate")
+                print("Enter a valid Y Coordinate!")
                 continue
             else:
                 final_state.append(int(state))
             break
-        break
-        # print(canvas[canvas.shape[0]-1 - final_state[1]][final_state[0]])
-        # if(canvas[canvas.shape[0]-1 - final_state[1]][final_state[0]][0]==255):
-        #     print("The entered goal node is in the obstacle space")
-        #     final_state.clear()
-        # else:
-        #     break
+
+        if(canvas[canvas.shape[0]-1 - final_state[1]][final_state[0]][0]==255):
+            print("*** The entered goal node is in the obstacle space! ***")
+            final_state.clear()
+        else:
+            break
     while True:
         initial_angle = input("Enter the Initial Head Angle (0 to 360 degrees (multiple of 30 degrees)): ")
         if(int(initial_angle)<0 or int(initial_angle)>359 or (int(initial_angle)%30 != 0)):
-            print("Enter Valid Headway Angle")
+            print("Enter a valid Headway Angle!")
         else:
             initial_state.append(int(initial_angle))
             break
+
     while True:
         final_angle = input("Enter the Final Head Angle (0 to 360 degrees (multiple of 30 degrees)): ")
         if(int(final_angle)<0 or int(final_angle)>359 or (int(final_angle)%30 != 0)):
-            print("Enter Valid Headway Angle")
+            print("Enter a valid Headway Angle!")
         else:
             final_state.append(int(final_angle))
             break
-    while True:
-        clearance = input("Enter the clearance: ")
-        if(int(clearance)<0):
-            print("Enter Valid Clearance")
-        else:
-            break
-    while True:
-        robot_radius = input("Enter the robot radius: ")
-        if(int(robot_radius)<0):
-            print("Enter Valid robot_radius")
-        else:
-            break
+
     while True:
         step = input("Enter the step size from 1 to 10: ")
         if(int(step)<1 and int(step)>10):
             print("Enter Valid step size")
         else:
             break
-    return initial_state,final_state,int(step),int(clearance),int(robot_radius)
+    
+    return initial_state,final_state,int(step)
 
-def draw_obstacles(canvas,clr=5):
+
+def draw_obstacles(canvas,offset=15):
     """
     @brief: This function goes through each node in the canvas image and checks for the
     obstacle space using the half plane equations. 
@@ -125,21 +133,33 @@ def draw_obstacles(canvas,clr=5):
     # cv2.fillPoly(canvas, pts = [np.array([[115,40],[36,65],[105,150],[80,70]])], color=(255,0,0)) #Arrow
     # cv2.fillPoly(canvas, pts = [np.array([[200,110],[235,130],[235,170],[200,190],[165,170],[165,130]])], color=(255,0,0)) #Hexagon
     
-    height,width,_ = canvas.shape
-    # print(shape)
+    height, width, __ = canvas.shape
+
     for i in range(width):
         for j in range(height):
-            if(i<=clr) or (i>=(400-clr)) or (j<=clr) or (j>=(250-clr)):
+            if(i<=offset) or (i>=(400-offset)) or (j<=offset) or (j>=(250-offset)):
                 canvas[j][i] = [255,0,0]
 
-            if ((i-300)**2+(j-65)**2-((40+clr)**2))<=0:
+            # Drawing scaled obstacles with robot clearance and radius
+            if ((i-300)**2+(j-65)**2-((40+offset)**2))<=0:
                 canvas[j][i] = [255,0,0]
             
-            if (j+(0.57*i)-213.53)>=clr and (j-(0.57*i)+5.04+clr)>=0 and (i-235-clr)<=0 and (j+(0.57*i)-305.04-clr)<=0 and (j-(0.57*i)-76.465-clr)<=0 and (i-155-clr)>=0:
+            if (j+(0.57*i)-(224.285-offset*1.151))>=0 and (j-(0.57*i)+(4.285+offset*1.151))>=0 and (i-(235+offset))<=0 and (j+(0.57*i)-(304.285+offset*1.151))<=0 and (j-(0.57*i)-(75.714+offset*1.151))<=0 and (i-(165-offset))>=0:
                 canvas[j][i] = [255,0,0]
 
-            if ((j+(0.316*i)-66.1483-clr)>=0 and (j+(0.857*i)-140.156-clr)<=0 and (j-(0.114*i)-55.909-clr)<=0) or ((j-(1.23*i)-23.576-clr)<=0 and (j-(3.2*i)+197.763+clr)>=0 and (j-(0.114*i)-55.909-clr)>=0):
+            if ((j+(0.316*i)-(76.392-offset*1.048)>=0) and (j+(0.857*i)-(138.571+offset*1.317)<=0) and (j-(0.114*i)-60.909)<=0) or ((j-(3.2*i)+(186+offset*3.352)>=0) and (j-(1.232*i)-(20.652+offset*1.586))<=0 and (j-(0.114*i)-60.909)>=0):
                 canvas[j][i] = [255,0,0]
+
+            # Drawing actual obstacles without robot clearance and radius
+            if ((i-300)**2+(j-65)**2-((40)**2))<=0:
+                canvas[j][i] = [255,255,255]
+            
+            if (j+(0.57*i)-(224.285))>=0 and (j-(0.57*i)+(4.285))>=0 and (i-(235))<=0 and (j+(0.57*i)-(304.285))<=0 and (j-(0.57*i)-(75.714))<=0 and (i-(165))>=0:
+                canvas[j][i] = [255,255,255]
+
+            if ((j+(0.316*i)-(76.392)>=0) and (j+(0.857*i)-(138.571)<=0) and (j-(0.114*i)-60.909)<=0) or ((j-(3.2*i)+(186)>=0) and (j-(1.232*i)-(20.652))<=0 and (j-(0.114*i)-60.909)>=0):
+                canvas[j][i] = [255,255,0]
+
     return canvas
 
 #Change the data structure to add total cost and cost to goal.
@@ -429,7 +449,7 @@ def back_track(initial_state,final_state,closed_list,canvas):
     """
     #Creating video writer to generate a video.
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('A-Star-amalapak-okritvik.avi',fourcc,1000,(canvas.shape[1],canvas.shape[0]))
+    out = cv2.VideoWriter('A-Star-amalapak-okritvik.avi',fourcc,400,(canvas.shape[1],canvas.shape[0]))
     print("Total Number of nodes Explored = ",len(closed_list)) 
     keys = closed_list.keys() #Returns all the nodes that are explored
     path_stack = [] #Stack to store the path from start to goal
@@ -459,7 +479,7 @@ def back_track(initial_state,final_state,closed_list,canvas):
     start_node = path_stack.pop()
     while(len(path_stack)>0):
         path_node = path_stack.pop()
-        cv2.line(canvas,(int(start_node[0]),int(start_node[1])),(int(path_node[0]),int(path_node[1])),(255,0,196),2)
+        cv2.line(canvas,(int(start_node[0]),int(start_node[1])),(int(path_node[0]),int(path_node[1])),(255,0,196),5)
         print(path_node)
         start_node = path_node.copy()
     #     canvas[path_node[1]][path_node[0]] = [19,209,158]
@@ -469,18 +489,23 @@ def back_track(initial_state,final_state,closed_list,canvas):
     out.release()
 
 if __name__ == '__main__':
-     #Gives the time at which the program has started
+    
     canvas = np.ones((250,400,3),dtype="uint8") #Creating a blank canvas
     canvas = draw_obstacles(canvas) #Draw the obstacles in the canvas, default point robot with 5 units of clearance
+
     #Uncomment the below lines to see the obstacle space. Press Any Key to close the image window
     # cv2.imshow("Canvas",canvas)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
-    initial_state,final_state,step,clearance,robot_radius = take_inputs(canvas) #Take the start and goal node from the user
-    canvas = draw_obstacles(canvas,clr = clearance+robot_radius)
+
+    clearance, robot_radius = take_robot_inputs()
+    canvas = draw_obstacles(canvas,offset = (clearance + robot_radius))
+    initial_state, final_state, step = take_map_inputs(canvas) #Take the start and goal node from the user
+    
     #Changing the cartesian coordinates to image coordinates:
     initial_state[1] = canvas.shape[0]-1 - initial_state[1]
     final_state[1] = canvas.shape[0]-1 - final_state[1]
+    
     #Converting the angles with respect to the image coordinates
     if initial_state[2]!=0:
         initial_state[2] = 360 - final_state[2]
@@ -488,9 +513,9 @@ if __name__ == '__main__':
         final_state[2] = 360 - final_state[2]
     print(initial_state,final_state)
     #Write a condition to check if the initial state and final state are in the obstacle space and exit from program and ask to rerun with valid start and goal positions
-    if(canvas[initial_state[1]][initial_state[0]][0]==255 or canvas[final_state[1]][final_state[0]][0]==255):
-        print("Given Start or Goal Node is in the Obstacle Region. Please re-run with Valid Coordinates")
-        exit()
+    # if(canvas[initial_state[1]][initial_state[0]][0]==255 or canvas[final_state[1]][final_state[0]][0]==255):
+    #     print("Given Start or Goal Node is in the Obstacle Region. Please re-run with Valid Coordinates")
+    #     exit()
     start_time = time.time()
     cv2.circle(canvas,(int(initial_state[0]),int(initial_state[1])),2,(0,0,255),-1)
     cv2.circle(canvas,(int(final_state[0]),int(final_state[1])),2,(0,0,255),-1)
