@@ -22,8 +22,16 @@ Implementation of the A* algorithm for path planning of a point robot with a non
 
 	Goal-Node:  (350, 150, 30)
 
+### Node Exploration
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/40534801/159372263-9075bff4-e728-4403-9912-189b5e1658ca.png" width="800" height="500">
+  <img src="https://user-images.githubusercontent.com/40534801/159383496-facc8bd3-9bfd-4b3f-8aa7-253a0aba1881.gif" width="400" height="250">
+</p>
+
+
+
+### Optimal Path
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/40534801/159372263-9075bff4-e728-4403-9912-189b5e1658ca.png" width="400" height="250">
 </p>
 
 
@@ -35,24 +43,32 @@ Implementation of the A* algorithm for path planning of a point robot with a non
 
 	Goal-Node:  (360, 140, 60)
 
+### Node Exploration
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/40534801/159372566-d5347785-85e0-434f-a1ae-d713e76944fc.png " width="800" height="500">
+  <img src="https://user-images.githubusercontent.com/40534801/159382089-91ac6bfe-8a6c-4b02-a2c5-bb6879efc6d5.gif " width="400" height="250">
 </p>
 
+### Optimal Path
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/40534801/159372566-d5347785-85e0-434f-a1ae-d713e76944fc.png " width="400" height="250">
+</p>
+
+
+
 ### Note: 
-The shapes in the map including the outer boudary walls have been bloated by robot clearance + radius amount on all sides to account.
+The shapes in the map including the outer boudary walls have been bloated by robot clearance + radius amount on all sides.
 
 
 ## Running the Code:
 The code accepts the start and goal positions from the user through the command-line interface as mentioned below.
 
 **Format/Syntax:**  
-		python3 a-star.py
+		python3 A-Star.py
 
 
 **For Test Case 1:**	
 		
-		python3 a-star.py
+		python3 A-Star.py
 
 		Enter the robot's clearance: 5
 		Enter the robot's radius: 10
@@ -66,7 +82,7 @@ The code accepts the start and goal positions from the user through the command-
 
 **For Test Case 2:**	
 		
-		python3 a-star.py
+		python3 A-Star.py
 
 		Enter the robot's clearance: 5
 		Enter the robot's radius: 10
